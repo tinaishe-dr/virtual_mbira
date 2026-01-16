@@ -11,7 +11,7 @@ function setup() {
   let baseX = 210;
   let baseY = 80;
   //position of top right keys
-  let base2X = 570;
+  let base2X = 590;
   let base2Y = 80;
 
   
@@ -47,7 +47,6 @@ function setup() {
     392.00, // G4
     440.00, // A4
     493.88, // B4
-    523.25  // C5
   ];
 
   // Create metal keys
@@ -98,6 +97,25 @@ function mousePressed() {
   }
 }
 
+//function drawmbira
+function drawMbiraKey(x, y, topWidth, bottomWidth, height) {
+  beginShape();
+  
+  // top left
+  vertex(x - topWidth / 2, y);
+  // top right
+  vertex(x + topWidth / 2, y);
+
+  // bottom right
+  vertex(x + bottomWidth / 2, y + height);
+
+  // bottom left
+  vertex(x - bottomWidth / 2, y + height);
+
+  endShape(CLOSE);
+}
+
+
 
 // ---------------- CLASSES ----------------
 
@@ -116,10 +134,18 @@ class MbiraKey {
   }
 
   display() {
-    fill(180);
-    stroke(220);
-    rect(this.x, this.y, this.w, this.h, 2);
-  }
+  fill(180);
+  stroke(220);
+
+  drawMbiraKey(
+    this.x + this.w / 2,  // center X
+    this.y,              // top anchor
+    this.w * 0.5,        // narrow top
+    this.w * 1.4,        // wider bottom
+    this.h               // length
+  );
+}
+
 
   isClicked(mx, my) {
   return (
@@ -151,4 +177,9 @@ function drawSoundboard() {
   // Sound hole
   fill(0);
   ellipse(590, 490, 70);
+  
+  fill(180);
+stroke(220);
+drawMbiraKey(300, 450, 14, 30, 220);
+
 }
