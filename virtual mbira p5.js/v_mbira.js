@@ -116,13 +116,14 @@ class MbiraKey {
   }
 
   isClicked(mx, my) {
-    return (
-      mx > this.x &&
-      mx < this.x + this.w &&
-      my > this.y - this.h &&
-      my < this.y
-    );
-  }
+  return (
+    mx > this.x &&
+    mx < this.x + this.w &&
+    my > this.y &&
+    my < this.y + this.h
+  );
+}
+
 
   play() {
     this.osc.amp(0.4, 0.01);
