@@ -1,17 +1,17 @@
 let keys = [];
 
 function setup() {
-  createCanvas(720, 650);
+  createCanvas(1200, 1200);
   userStartAudio(); // required for sound
 
   //position of top left keys
-  let base1X = 180; //horizontal
+  let base1X = 260; //horizontal
   let base1Y = 80; //vertical
   //position of bottom left keys
-  let baseX = 210;
+  let baseX = 296;
   let baseY = 80;
   //position of top right keys
-  let base2X = 590;
+  let base2X = 785;
   let base2Y = 80;
 
   
@@ -47,12 +47,15 @@ function setup() {
     392.00, // G4
     440.00, // A4
     493.88, // B4
+    565.77,
+    445.77,
+    435.78,
   ];
 
   // Create metal keys
   //top left keys (notes 1)
   for (let i = 0; i < notes1.length; i++) {
-    let x = base1X + (notes1.length/2 - i) * 60;
+    let x = base1X + (notes1.length/2 - i) * 72;
     let y = base1Y;
     let length = 290 - i * 10;
 
@@ -61,7 +64,7 @@ function setup() {
   
   //bottom left keys (notes 2)
   for (let i = 0; i < notes2.length; i++) {
-    let x = baseX + (notes2.length/2 -i) * 60;
+    let x = baseX + (notes2.length/2 -i) * 72;
     let y = baseY;
     let length = 370 - i * 10;
 
@@ -70,7 +73,7 @@ function setup() {
   
   //right keys (notes)
   for (let i = 0; i < notes.length; i++) {
-    let x = base2X + (i - notes.length/2) * 30;
+    let x = base2X + (i - notes.length/2) * 40;
     let y = base2Y;
     let length = 250 - i * 10;
 
@@ -86,6 +89,11 @@ function draw() {
   for (let key of keys) {
     key.display();
   }
+
+// pressure bars (drawn on top)
+drawPressureBar(70, 115, 926, 20); // top bar
+//drawPressureBar(160, 285, 380, 12); // lower bar (optional)
+  
 }
 
 function mousePressed() {
@@ -113,6 +121,12 @@ function drawMbiraKey(x, y, topWidth, bottomWidth, height) {
   vertex(x - bottomWidth / 2, y + height);
 
   endShape(CLOSE);
+}
+
+function drawPressureBar(x, y, w, h) {
+  fill(70);
+  stroke(40);
+  rect(x, y, w, h, 4);
 }
 
 
@@ -167,19 +181,15 @@ class MbiraKey {
 function drawSoundboard() {
   //exterior rectangle
   fill(218, 160, 109);
-  rect(10, 50, 695, 580, 5);
+  rect(70, 50, 920, 780, 5);
   
   //interior rectangle
   noStroke();
   fill(120, 70, 30);
-  rect(20, 50, 675, 520, 20);
+  rect(85, 50, 890, 700, 20);
 
   // Sound hole
   fill(0);
-  ellipse(590, 490, 70);
-  
-  fill(180);
-stroke(220);
-drawMbiraKey(300, 450, 14, 30, 220);
+  ellipse(850, 650, 100);
 
 }
