@@ -4,10 +4,13 @@ function setup() {
   createCanvas(700, 600);
   userStartAudio(); // required for sound
 
+  //position of top left keys
   let base1X = 240;
   let base1Y = 100;
+  //position of bottom left keys
   let baseX = 265;
-  let baseY = 300;
+  let baseY = 100;
+  //position of top right keys
   let base2X = 560;
   let base2Y = 100;
 
