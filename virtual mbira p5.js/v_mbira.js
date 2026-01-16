@@ -117,7 +117,7 @@ class MbiraKey {
   display() {
     fill(180);
     stroke(220);
-    rect(this.x, this.y, this.w, this.h, 8);
+    rect(this.x, this.y, this.w, this.h, 2);
   }
 
   isClicked(mx, my) {
