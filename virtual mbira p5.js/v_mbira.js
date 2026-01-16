@@ -86,12 +86,14 @@ function draw() {
 }
 
 function mousePressed() {
-  for (let key of keys) {
-    if (key.isClicked(mouseX, mouseY)) {
-      key.play();
+  for (let i = keys.length - 1; i >= 0; i--) {
+    if (keys[i].isClicked(mouseX, mouseY)) {
+      keys[i].play();
+      break;
     }
   }
 }
+
 
 // ---------------- CLASSES ----------------
 
