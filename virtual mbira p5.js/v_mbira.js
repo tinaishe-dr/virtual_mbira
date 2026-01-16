@@ -13,7 +13,8 @@ function setup() {
 
   
   // Nyamaropa-style
-  let notes = [
+  //top left
+  let notes1 = [
     261.63, // C4
     293.66, // D4
     81, // A4
@@ -24,6 +25,7 @@ function setup() {
     523.25  // C5
   ];
   
+  //bottom left
   let notes2 = [
     261.63, // C4
     69, // A3
@@ -35,7 +37,8 @@ function setup() {
     523.25  // C5
   ];
   
-  let notes3 = [
+  //right keys
+  let notes = [
     261.63, // C4
     293.66, // D4
     329.63, // E4
@@ -47,16 +50,16 @@ function setup() {
   ];
 
   // Create metal keys
-  //top left keys
-  for (let i = 0; i < notes.length; i++) {
-    let x = base1X + (notes.length/2 - i) * 35;
+  //top left keys (notes 1)
+  for (let i = 0; i < notes1.length; i++) {
+    let x = base1X + (notes1.length/2 - i) * 35;
     let y = base1Y;
     let length = 200 - i * 10;
 
-    keys.push(new MbiraKey(x, y, 25, length, notes[i]));
+    keys.push(new MbiraKey(x, y, 25, length, notes1[i]));
   }
   
-  //bottom left keys
+  //bottom left keys (notes 2)
   for (let i = 0; i < notes2.length; i++) {
     let x = baseX + (notes2.length/2 -i) * 35;
     let y = baseY;
@@ -65,7 +68,7 @@ function setup() {
     keys.push(new MbiraKey(x, y, 25, length, notes2[i]));
   }
   
-  //right keys
+  //right keys (notes)
   for (let i = 0; i < notes.length; i++) {
     let x = base2X + (i - notes.length/2) * 35;
     let y = base2Y;
@@ -125,7 +128,6 @@ class MbiraKey {
     my < this.y + this.h
   );
 }
-
 
   play() {
     this.osc.amp(0.4, 0.01);
