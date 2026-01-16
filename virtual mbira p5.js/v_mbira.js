@@ -8,54 +8,54 @@ function setup() {
   let base1X = 260; //horizontal
   let base1Y = 80; //vertical
   //position of bottom left keys
-  let baseX = 296;
+  let baseX = 298;
   let baseY = 80;
   //position of top right keys
-  let base2X = 785;
+  let base2X = 795;
   let base2Y = 80;
 
   
   // Nyamaropa-style
   //top left
   let notes1 = [
-    261.63, // C4
-    293.66, // D4
-    81, // A4
-    349.23, // F4
-    392.00, // G4
-    440.00, // A4
-    493.88, // B4
+    174.61, // F3-
+    261.63, // C4-
+    233.08, // Bb3-
+    293.66, // D4-
+    311.13, // Eb4-
+    349.23, // F4-
+    392.00, // G4-
   ];
   
   //bottom left
   let notes2 = [
-    261.63, // C4
-    69, // A3
-    329.63, // E4
-    349.23, // F4
-    392.00, // G4
-    440.00, // A4
-    493.88, // B4
+    87.31, // F2-
+    110.00, // A2-
+    116.54, // Bb2-
+    130.81, // C3-
+    146.83, // D3-
+    155.56, // Eb3-
+    196.00, // G3-
   ];
   
   //right keys
   let notes = [
-    261.63, // C4
-    293.66, // D4
-    329.63, // E4
-    349.23, // F4
-    392.00, // G4
-    440.00, // A4
-    493.88, // B4
-    565.77,
-    445.77,
-    435.78,
+    220.00, // A3-
+    349.23, // F4-
+    392.00, // G4-
+    440.00, // A4-
+    466.16, // Bb4-
+    523.25, // C5-
+    587.33, // D5-
+    622.25, // Eb5-
+    698.46, // F5-
+    783.99, // G5-
   ];
 
   // Create metal keys
   //top left keys (notes 1)
   for (let i = 0; i < notes1.length; i++) {
-    let x = base1X + (notes1.length/2 - i) * 72;
+    let x = base1X + (notes1.length/2 - i) * 75;
     let y = base1Y;
     let length = 430 - i * 10;
 
@@ -64,7 +64,7 @@ function setup() {
   
   //bottom left keys (notes 2)
   for (let i = 0; i < notes2.length; i++) {
-    let x = baseX + (notes2.length/2 -i) * 72;
+    let x = baseX + (notes2.length/2 -i) * 75;
     let y = baseY;
     let length = 510 - i * 10;
 
