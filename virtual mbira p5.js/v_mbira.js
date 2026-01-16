@@ -57,7 +57,7 @@ function setup() {
   for (let i = 0; i < notes1.length; i++) {
     let x = base1X + (notes1.length/2 - i) * 72;
     let y = base1Y;
-    let length = 290 - i * 10;
+    let length = 430 - i * 10;
 
     keys.push(new MbiraKey(x, y, 25, length, notes1[i]));
   }
@@ -66,7 +66,7 @@ function setup() {
   for (let i = 0; i < notes2.length; i++) {
     let x = baseX + (notes2.length/2 -i) * 72;
     let y = baseY;
-    let length = 370 - i * 10;
+    let length = 510 - i * 10;
 
     keys.push(new MbiraKey(x, y, 25, length, notes2[i]));
   }
@@ -75,7 +75,7 @@ function setup() {
   for (let i = 0; i < notes.length; i++) {
     let x = base2X + (i - notes.length/2) * 40;
     let y = base2Y;
-    let length = 250 - i * 10;
+    let length = 350 - i * 10;
 
     keys.push(new MbiraKey(x, y, 25, length, notes[i]));
   }
@@ -91,7 +91,7 @@ function draw() {
   }
 
 // pressure bars (drawn on top)
-drawPressureBar(70, 115, 926, 20); // top bar
+drawPressureBar(50, 115, 926, 20); // top bar
 //drawPressureBar(160, 285, 380, 12); // lower bar (optional)
   
 }
@@ -181,12 +181,12 @@ class MbiraKey {
 function drawSoundboard() {
   //exterior rectangle
   fill(218, 160, 109);
-  rect(70, 50, 920, 780, 5);
+  rect(55, 50, 940, 780, 5);
   
   //interior rectangle
   noStroke();
   fill(120, 70, 30);
-  rect(85, 50, 890, 700, 20);
+  rect(70, 50, 912, 700, 20);
 
   // Sound hole
   fill(0);
