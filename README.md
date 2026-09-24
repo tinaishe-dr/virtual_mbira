@@ -25,6 +25,7 @@ Open **http://localhost:4173**. Alternatively, use `npm start`. Set `PORT` to ch
 - Use **Voice** to compare the video-derived sound with the original synthesizer. **Tuning**, **Pitch**, **Rattle**, **Resonance**, and **Volume** shape the sound.
 - **Tuning key** defaults to **B♭ (B flat)**. Choose from all 12 roots: B♭, C, D♭, D, E♭, E, F, G♭, G, A♭, A, and B. **Scale** offers the original mixolydian intervals, major, or natural minor. Root, scale, and extra pitch shift are remembered on this browser; key and touch-pad labels update immediately. Existing loops retain their recorded pitches.
 - In B♭ tuning, **W plays F4** and **E plays E♭4** at zero extra pitch shift. W sits directly beside Q (B♭3), with E on the other side of W. Their note labels match their sounds. Other tuning roots retain their previous pitch mappings; saved loops keep the notes recorded at the time.
+- Every time the site opens, the gourd is on, key labels are off, and the video reference voice starts with Rattle at 100% and Resonance at 1 second. Saved layers keep their recorded sound settings.
 - Toggle labels or the optional gourd surround. The surround is visual and does not change the sound.
 
 The first interaction enables audio. Headphones help with low notes. Both voices use an output compressor and a 32-voice limit. Keys are extended by 10%. From the center outward, the upper bank follows Q, W, E, R, T, Y, U, with visual lengths maintaining the V-shaped outline independently of their pitches. Keyboard shortcuts and recording IDs are unchanged.
