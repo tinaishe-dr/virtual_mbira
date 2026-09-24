@@ -19,8 +19,8 @@
     <section class="intro"><div><p class="eyebrow">ROOTED IN ZIMBABWE. PLAYED ANYWHERE.</p><h1>A little space to <em>play.</em></h1><p class="lede">Find a rhythm. Follow your curiosity. Make it your own.</p></div><div class="audio-status" id="audio-status">● Sound starts with your first note</div></section>
     <div class="studio">
       <section class="instrument-panel" aria-label="Playable mbira">
-        <div class="panel-heading"><span><span class="live-dot"></span> THE SOUNDBOARD</span><div><button id="gourd" class="text-button" aria-pressed="false">Gourd off</button><button id="labels" class="text-button" aria-pressed="true">Key labels on</button></div></div>
-        <div class="instrument-stage" id="instrument-stage"><div class="gourd-shell" aria-hidden="true"></div><div class="soundboard" id="soundboard"><div class="wood-engraving">MBIRA <span>24 KEYS · ENDLESS POSSIBILITIES</span></div><div class="key-banks" id="key-banks"><div class="pressure-bar" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="finger-hole" aria-hidden="true"></div><div class="board-rattle" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="board-stamp" aria-hidden="true">DZAVADZIMU<br><span>INSPIRED</span></div></div></div>
+        <div class="panel-heading"><span><span class="live-dot"></span> THE SOUNDBOARD</span><div><button id="gourd" class="text-button" aria-pressed="true">Gourd on</button><button id="labels" class="text-button" aria-pressed="false">Key labels off</button></div></div>
+        <div class="instrument-stage with-gourd" id="instrument-stage"><div class="gourd-shell" aria-hidden="true"></div><div class="soundboard hide-labels" id="soundboard"><div class="wood-engraving">MBIRA <span>24 KEYS · ENDLESS POSSIBILITIES</span></div><div class="key-banks" id="key-banks"><div class="pressure-bar" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="finger-hole" aria-hidden="true"></div><div class="board-rattle" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="board-stamp" aria-hidden="true">DZAVADZIMU<br><span>INSPIRED</span></div></div></div>
         <div class="instrument-footer"><span><span class="keycap">A</span> Use your keyboard or tap the keys</span><span id="last-note" aria-live="off">Your next note is waiting</span></div>
         <details class="touch-controls"><summary>Larger touch pads</summary><div id="touch-pads"></div></details>
       </section>
@@ -31,8 +31,8 @@
         <label for="tuning">Scale</label><select id="tuning"><option value="original">Mixolydian</option><option value="major">Major</option><option value="minor">Natural minor</option></select><p class="field-note" id="tuning-note">B♭ tuning · equal temperament. Traditional instruments may use different intervals.</p>
         <label for="transpose">Pitch <output id="transpose-value">0 semitones</output></label><input id="transpose" type="range" min="-12" max="12" value="0" step="1">
         <label for="volume">Volume <output id="volume-value">65%</output></label><input id="volume" type="range" min="0" max="100" value="65">
-        <label for="buzz">Rattle <output id="buzz-value">25%</output></label><input id="buzz" type="range" min="0" max="100" value="25"><p class="field-note">A textured buzz inspired by the instrument’s rattles.</p>
-        <label for="sustain">Resonance <output id="sustain-value">1.8 s</output></label><input id="sustain" type="range" min="0.4" max="3.5" value="1.8" step="0.1">
+        <label for="buzz">Rattle <output id="buzz-value">100%</output></label><input id="buzz" type="range" min="0" max="100" value="100"><p class="field-note">A textured buzz inspired by the instrument’s rattles.</p>
+        <label for="sustain">Resonance <output id="sustain-value">1.0 s</output></label><input id="sustain" type="range" min="0.4" max="3.5" value="1" step="0.1">
         <div class="control-divider"></div><button id="demo" class="secondary full">▷ Hear an example</button><button id="stop" class="text-button full">Silence all sound <kbd>Esc</kbd></button>
       </aside>
     </div>

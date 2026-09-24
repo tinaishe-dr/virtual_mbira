@@ -1,7 +1,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const audio = new MbiraAudio();
-const settings = { volume: .65, buzz: .25, sustain: 1.8, voice: 'reference' };
+const settings = { volume: .65, buzz: 1, sustain: 1, voice: 'reference' };
 let tuning = 'original', tuningRoot = 'bb', transpose = 0, recording = false, recordStart = 0, session = null, looping = false, playback = null, generation = 0;
 const buttons = new Map(), pads = new Map(), animations = new Map(), held = new Set();
 const STORAGE = 'mbira-session-v2';
