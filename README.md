@@ -12,7 +12,11 @@ For a stable local address and reliable browser storage, install Node.js 18 or l
 node server.js
 ```
 
-Open **http://localhost:4173**. Alternatively, use `npm start`. Set `PORT` to choose another port. The development server listens only on your computer. For hosting, serve `index.html`, `styles.css`, `gourd.css`, the `assets/` directory, `music.js`, `reference-bank.js`, `audio.js`, and `app.js` with any static website host.
+Open **http://localhost:4173**. Alternatively, use `npm start`. Set `PORT` to choose another port. The development server listens only on your computer. For hosting, serve `index.html`, `styles.css`, `gourd.css`, `nyunga.css`, the `assets/` directory, `music.js`, `reference-bank.js`, `audio.js`, and `app.js` with any static website host.
+
+## Nyunga Nyunga interface
+
+Choose **Nyunga Nyunga · 15 keys** in the Instrument menu. Its narrow wooden board, alternating tine lengths, brown gourd surround and metal rattle plate follow the supplied photos. Keys are numbered **1–15 from left to right**, always visible for mapping. Select a key to identify it. This interface intentionally has no pitches or keyboard shortcuts yet; these await the owner’s mappings. New recording, tuning and the example are unavailable in this mode; saved Dzavadzimu loops remain available. Switch back to Dzavadzimu to play the existing instrument.
 
 ## Play
 

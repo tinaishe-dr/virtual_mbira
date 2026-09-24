@@ -1,0 +1,21 @@
+.instrument-picker { display:flex; align-items:center; gap:16px; padding:0 0 20px; }
+.instrument-picker label { margin:0; white-space:nowrap; }
+.instrument-picker select { max-width:340px; margin:0; }
+#mapping-help { margin:0 0 20px; }
+.nyunga-key { display:none; }
+.nyunga .tine:not(.nyunga-key), .nyunga .finger-hole, .nyunga .board-stamp { display:none; }
+.nyunga .nyunga-key { display:block; }
+.nyunga .tine-label { visibility:visible; color:#28332e; font-size:10px; text-shadow:0 1px #fff8; }
+.instrument-stage.nyunga { aspect-ratio:1; max-width:580px; }
+.nyunga.with-gourd .gourd-shell { background:url('assets/nyunga-gourd.svg') center / 100% 100% no-repeat; }
+.nyunga .soundboard { width:51%; aspect-ratio:.72; margin:8% auto; background:repeating-linear-gradient(88deg,transparent 0 5px,#efb77c30 6px,transparent 8px 16px),linear-gradient(100deg,#713c28,#ae6844 30%,#834128 65%,#b77850); border-color:#985c3e #643821 #512d1d; }
+.nyunga.with-gourd .soundboard { width:43%; left:28.5%; bottom:14%; margin:0; }
+.nyunga .key-banks { inset:3% 5% 30%; }
+.nyunga .pressure-bar { top:19%; height:3.5%; }
+.nyunga .key-banks:before { top:32%; height:1%; }
+.nyunga .tine:before { background:linear-gradient(90deg,#858981,#e2e3d9 28%,#a8ada5 70%,#d9dcd3); clip-path:polygon(33% 0,67% 0,75% 55%,97% 94%,100% 97%,85% 100%,15% 100%,0 97%,3% 94%,25% 55%); }
+.nyunga .wood-engraving { display:none; }
+.nyunga .board-rattle { display:flex; position:absolute; bottom:7%; left:18%; width:64%; height:17%; border:1px solid #aaa; border-radius:8%; background:repeating-linear-gradient(90deg,#89918d,#b8bdb4 2px,#939a93 4px); align-items:center; justify-content:space-evenly; box-shadow:1px 3px 3px #23170f; }
+.nyunga .board-rattle i { width:28%; height:auto; aspect-ratio:1; margin:0; border-radius:50%; border:3px dashed #c7b69c; background:radial-gradient(circle,#9d654b 30%,#c2a987 34%,#9c4534 50%,#c5b796 55%,#88714f); }
+.nyunga .board-rattle i:nth-child(n+3) { display:none; }
+@media(max-width:740px) { .nyunga .tine-label { font-size:8px; } .instrument-picker { gap:8px; } }

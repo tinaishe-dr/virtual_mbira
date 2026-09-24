@@ -14,7 +14,7 @@ const path = require('node:path');
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(process.env.MBIRA_URL || 'http://localhost:4173');
-    await page.locator('.tine').last().waitFor();
+    await page.locator('.tine:not(.nyunga-key)').last().waitFor();
     async function assertStartupDefaults() {
       assert.equal(await page.locator('#gourd').getAttribute('aria-pressed'), 'true');
       assert.equal(await page.locator('#labels').getAttribute('aria-pressed'), 'false');
@@ -26,14 +26,14 @@ const path = require('node:path');
       assert.deepEqual(await page.evaluate(() => ({ ...settings })), { volume: .65, buzz: 1, sustain: 1, voice: 'reference' });
     }
     await assertStartupDefaults();
-    assert.equal(await page.locator('.tine').count(), 24);
+    assert.equal(await page.locator('.tine:not(.nyunga-key)').count(), 24);
     assert.equal(await page.locator('.touch-pad').count(), 24);
     assert.equal(await page.locator('#tuning-root').inputValue(), 'bb');
     assert.equal(await page.locator('#tuning-root option').count(), 12);
     assert.equal(await page.locator('[data-id="1-0"] .note-name').textContent(), 'B♭2');
     assert.equal(await page.locator('[data-id="0-1"] .note-name').textContent(), 'F4');
     assert.equal(await page.locator('[data-id="0-2"] .note-name').textContent(), 'E♭4');
-    const bbLayout = await page.locator('.tine').evaluateAll(keys => keys.map(key => key.getAttribute('style')));
+    const bbLayout = await page.locator('.tine:not(.nyunga-key)').evaluateAll(keys => keys.map(key => key.getAttribute('style')));
     await page.evaluate(() => {
       window.playedPitches = [];
       const originalPlay = audio.play.bind(audio);
@@ -60,14 +60,14 @@ const path = require('node:path');
     assert.equal(await page.locator('[data-id="1-0"] .note-name').textContent(), 'C2');
     await page.locator('#tuning-root').selectOption('f');
     await page.locator('#tuning').selectOption('original');
-    assert.deepEqual(await page.locator('.tine').evaluateAll(keys => keys.map(key => key.getAttribute('style'))), bbLayout, 'the sound swap does not move or resize the keys');
+    assert.deepEqual(await page.locator('.tine:not(.nyunga-key)').evaluateAll(keys => keys.map(key => key.getAttribute('style'))), bbLayout, 'the sound swap does not move or resize the keys');
     assert.ok(await page.locator('#play').isDisabled());
-    const blockedKeys = await page.locator('.tine').evaluateAll(buttons => buttons.filter(button => {
+    const blockedKeys = await page.locator('.tine:not(.nyunga-key)').evaluateAll(buttons => buttons.filter(button => {
       const rect = button.getBoundingClientRect();
       return document.elementFromPoint(rect.x + rect.width / 2, rect.bottom - 8)?.closest('.tine') !== button;
     }).map(button => button.dataset.id));
     assert.deepEqual(blockedKeys, [], 'every tine tip is directly clickable');
-    const upperTips = await page.locator('.tine:not(.lower)').evaluateAll(buttons => buttons
+    const upperTips = await page.locator('.tine:not(.lower):not(.nyunga-key)').evaluateAll(buttons => buttons
       .filter(button => button.dataset.id.startsWith('0-'))
       .map(button => ({ id: button.dataset.id, x: button.getBoundingClientRect().x, tip: button.getBoundingClientRect().bottom }))
       .sort((a, b) => a.x - b.x));
@@ -89,7 +89,7 @@ const path = require('node:path');
     await page.locator('#gourd').click();
     assert.equal(await page.locator('#gourd').getAttribute('aria-pressed'), 'true');
     await page.locator('#instrument-stage').scrollIntoViewIfNeeded();
-    const gourdHits = await page.locator('.tine').evaluateAll(buttons => buttons.every(button => {
+    const gourdHits = await page.locator('.tine:not(.nyunga-key)').evaluateAll(buttons => buttons.every(button => {
       const r = button.getBoundingClientRect();
       return document.elementFromPoint(r.x + r.width / 2, r.bottom - 3)?.closest('.tine') === button;
     }));
@@ -209,6 +209,21 @@ const path = require('node:path');
     await page.screenshot({ path: path.join(output, 'mobile.png'), fullPage: true });
     await page.setViewportSize({ width: 320, height: 640 });
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'no horizontal page overflow at 320px');
+    await page.locator('#instrument-type').selectOption('nyunga');
+    assert.equal(await page.locator('.nyunga-key:visible').count(), 15);
+    assert.equal(await page.locator('.tine:not(.nyunga-key):visible').count(), 0);
+    assert.ok(await page.locator('#record').isDisabled());
+    await page.locator('.nyunga-key').nth(7).click();
+    assert.equal(await page.locator('#last-note').textContent(), 'Key 8 · mapping pending');
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+    await page.screenshot({ path: path.join(output, 'nyunga-mobile.png'), fullPage: true });
+    await page.setViewportSize({ width: 1440, height: 1100 });
+    await page.screenshot({ path: path.join(output, 'nyunga-desktop.png'), fullPage: true });
+    await page.locator('#gourd').click();
+    assert.equal(await page.locator('.nyunga-key:visible').count(), 15);
+    await page.locator('#instrument-type').selectOption('dzavadzimu');
+    assert.equal(await page.locator('.tine:not(.nyunga-key):visible').count(), 24);
+    assert.ok(await page.locator('#record').isEnabled());
     assert.deepEqual(errors, []);
     console.log('Browser checks passed: playable keys, reference/synth voices, immediate layer recording, multi-pass overdubs, synchronized duration, per-layer sound, mute, rename, mix export, restore, empty-take preservation, removal, stop, WAV signal, tuning, clear, demo, corrupt storage, touch pads, and responsive layouts.');
   } finally { await browser.close(); }

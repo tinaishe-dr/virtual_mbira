@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+<defs>
+ <radialGradient id="inside"><stop stop-color="#8d5336"/><stop offset=".7" stop-color="#603b28"/><stop offset="1" stop-color="#281c16"/></radialGradient>
+ <linearGradient id="rim" x2=".9" y2="1"><stop stop-color="#ca9f70"/><stop offset=".35" stop-color="#8f543b"/><stop offset=".7" stop-color="#ad7755"/><stop offset="1" stop-color="#c99b68"/></linearGradient>
+ <filter id="grain"><feTurbulence baseFrequency=".07 .4" numOctaves="3" seed="8"/><feColorMatrix type="saturate" values="0"/><feBlend in="SourceGraphic" mode="soft-light"/></filter>
+</defs>
+<ellipse cx="301" cy="312" rx="286" ry="283" fill="#20170f" opacity=".25"/>
+<circle cx="300" cy="298" r="281" fill="url(#inside)" stroke="#372a22" stroke-width="7"/>
+<path d="M22 329 C-7 142 125 15 300 16 C475 15 607 145 578 329 L528 335 C493 322 482 263 466 231 C438 175 378 137 300 137 C222 137 162 175 134 231 C118 263 107 322 72 335Z" fill="url(#rim)" stroke="#39291f" stroke-width="3"/>
+<circle cx="300" cy="298" r="278" fill="none" stroke="#c6996c" stroke-width="6"/>
+<path d="M278 526 L321 526 L329 573 L272 573Z" fill="#b58c59"/>
+<g fill="#28292a" stroke="#d4cbbb" stroke-width="2" stroke-dasharray="3 5"><path d="M300 20 Q260 66 300 115 Q339 66 300 20Z"/><path d="M25 297 Q83 319 64 390 Q18 365 25 297Z"/><path d="M575 297 Q517 319 536 390 Q582 365 575 297Z"/></g>
+<g fill="#d6c09a"><circle cx="300" cy="31" r="7"/><circle cx="30" cy="305" r="7"/><circle cx="570" cy="305" r="7"/></g>
+</svg>
