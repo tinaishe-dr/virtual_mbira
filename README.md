@@ -1,6 +1,7 @@
 # Mbira — a little space to play
 
 A complete browser instrument inspired by the mbira dzavadzimu. Play 24 metal keys, explore tunings, record phrases, loop them, and export audio. Rebuilt from the original p5.js sketch with native Web Audio and accessible HTML controls.
+<img width="1548" height="1096" alt="Virtual Mbira site" src="https://github.com/user-attachments/assets/8c927ee0-6d33-45aa-9328-84b56979f07d" />
 
 ## Run
 
