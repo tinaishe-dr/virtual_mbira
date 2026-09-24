@@ -1,0 +1,273 @@
+'use strict';
+const $ = id => document.getElementById(id);
+const audio = new MbiraAudio();
+const settings = { volume: .65, buzz: .25, sustain: 1.8, voice: 'reference' };
+let tuning = 'original', tuningRoot = 'bb', transpose = 0, recording = false, recordStart = 0, session = null, looping = false, playback = null, generation = 0;
+const buttons = new Map(), pads = new Map(), animations = new Map(), held = new Set();
+const STORAGE = 'mbira-session-v2';
+const LEGACY_STORAGE = 'mbira-session-v1';
+let draft = null, exporting = false;
+const TUNING_STORAGE = 'mbira-tuning-v1';
+MbiraMusic.tuningRoots.forEach(root => {
+  const option = document.createElement('option'); option.value = root.id; option.textContent = root.id === 'bb' ? 'B♭ · B flat' : root.name;
+  $('tuning-root').append(option);
+});
+try {
+  const saved = JSON.parse(localStorage.getItem(TUNING_STORAGE));
+  if (saved && MbiraMusic.tuningRoots.some(root => root.id === saved.root) && ['original', 'major', 'minor'].includes(saved.scale) && Number.isInteger(saved.transpose) && saved.transpose >= -12 && saved.transpose <= 12) {
+    tuningRoot = saved.root; tuning = saved.scale; transpose = saved.transpose;
+  }
+} catch { /* Tuning remains usable when storage is unavailable. */ }
+$('tuning-root').value = tuningRoot; $('tuning').value = tuning; $('transpose').value = transpose;
+const currentPitch = key => MbiraMusic.pitch(key.midi, tuning, transpose, tuningRoot);
+const timestamp = seconds => `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+MbiraMusic.keys.forEach(key => {
+  const button = document.createElement('button');
+  button.className = 'tine' + (key.bank === 1 ? ' lower' : ''); button.dataset.id = key.id;
+  const index = Number(key.id.split('-')[1]);
+  // Put C4 outside Bb3 so the upper bank follows the same V as the lower bank.
+  // IDs and keyboard shortcuts remain stable for saved recordings.
+  const position = key.bank === 0 ? [0, 2, 1, 3, 4, 5, 6][index] : index;
+  const left = key.bank === 0 ? 3 + (6 - position) * 6.8 : key.bank === 1 ? 6.4 + (6 - position) * 6.8 : 53 + position * 4.5;
+  // Cantilever frequency is approximately proportional to inverse length squared.
+  const base = [{ midi: 53, length: 58 }, { midi: 41, length: 87 }, { midi: 57, length: 65 }][key.bank];
+  const length = base.length * 1.1 * 2 ** (-(key.midi - base.midi) / 24);
+  button.style.setProperty('--left', `${left}%`); button.style.setProperty('--width', key.bank === 2 ? '3.9%' : '4.2%'); button.style.setProperty('--length', `${length}%`);
+  button.innerHTML = `<span class="tine-label"><span class="note-name"></span><kbd>${key.shortcut.toUpperCase()}</kbd></span>`;
+  button.addEventListener('pointerdown', event => { event.preventDefault(); strike(key); });
+  // Keyboard and assistive-technology activation produce a click without pointerdown.
+  button.addEventListener('click', event => { if (event.detail === 0) strike(key); });
+  $('key-banks').append(button); buttons.set(key.id, button);
+});
+MbiraMusic.banks.forEach((bank, index) => {
+  const group = document.createElement('div'); group.className = 'pad-group';
+  const title = document.createElement('p'); title.textContent = bank.name; group.append(title);
+  MbiraMusic.keys.filter(key => key.bank === index).forEach(key => {
+    const pad = document.createElement('button'); pad.className = 'touch-pad'; pad.addEventListener('pointerdown', event => { event.preventDefault(); strike(key); });
+    pad.addEventListener('click', event => { if (event.detail === 0) strike(key); }); group.append(pad); pads.set(key.id, pad);
+  });
+  $('touch-pads').append(group);
+});
+function updateNotes() {
+  const root = MbiraMusic.tuningRoots.find(root => root.id === tuningRoot);
+  $('tuning-note').textContent = `${root.name} ${tuning === 'original' ? 'mixolydian' : tuning === 'minor' ? 'natural minor' : 'major'} · equal temperament. Traditional instruments may use different intervals. Saved loops keep their recorded pitches.`;
+  $('transpose-value').value = `${transpose > 0 ? '+' : ''}${transpose} semitones`;
+  MbiraMusic.keys.forEach(key => { const name = MbiraMusic.noteName(currentPitch(key)), button = buttons.get(key.id); button.querySelector('.note-name').textContent = name; button.setAttribute('aria-label', `${MbiraMusic.banks[key.bank].name}, ${name}, keyboard ${key.shortcut}`); pads.get(key.id).textContent = name; pads.get(key.id).setAttribute('aria-label', button.getAttribute('aria-label')); });
+}
+function flash(id, midi) {
+  const button = buttons.get(id); clearTimeout(animations.get(id)); button.classList.remove('active'); void button.offsetWidth; button.classList.add('active');
+  pads.get(id).classList.add('active');
+  animations.set(id, setTimeout(() => { button.classList.remove('active'); pads.get(id).classList.remove('active'); animations.delete(id); }, 320));
+  $('last-note').textContent = `${MbiraMusic.noteName(midi)} · ${Math.round(MbiraMusic.frequency(midi))} Hz`;
+}
+async function ready() {
+  try { await audio.start(); audio.output.gain.value = settings.volume; $('audio-status').textContent = '● Sound is ready'; return true; }
+  catch (error) { $('audio-status').textContent = 'Sound unavailable — try a current browser'; $('session-status').textContent = error.message; return false; }
+}
+async function strike(key) {
+  const token = generation;
+  if (!await ready() || token !== generation) return;
+  const midi = currentPitch(key); audio.play(midi, settings); flash(key.id, midi);
+  if (recording) {
+    const at = audio.context.currentTime - recordStart;
+    const limit = session?.duration || 120;
+    const noteCount = (session?.tracks.reduce((sum, t) => sum + t.events.length, 0) || 0) + draft.events.length;
+    if (at >= 0 && at < limit && noteCount < 10000) draft.events.push({ id: key.id, midi, at });
+    else if (at >= limit || noteCount >= 10000) finishRecording();
+  }
+}
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') { silence(); return; }
+  if (event.ctrlKey || event.metaKey || event.altKey || event.repeat || /^(INPUT|SELECT|TEXTAREA)$/.test(event.target.tagName) || event.target.isContentEditable) return;
+  const key = MbiraMusic.keys.find(key => key.shortcut === event.key.toLowerCase());
+  if (!key || held.has(event.code)) return;
+  event.preventDefault(); held.add(event.code); strike(key);
+});
+document.addEventListener('keyup', event => held.delete(event.code));
+window.addEventListener('blur', () => held.clear());
+function saveTuning() {
+  updateNotes();
+  try { localStorage.setItem(TUNING_STORAGE, JSON.stringify({ root: tuningRoot, scale: tuning, transpose })); } catch { /* Optional preference storage. */ }
+}
+$('tuning-root').addEventListener('change', e => { tuningRoot = e.target.value; saveTuning(); });
+$('tuning').addEventListener('change', e => { tuning = e.target.value; saveTuning(); });
+$('voice').addEventListener('change', e => { settings.voice = e.target.value; });
+$('transpose').addEventListener('input', e => { transpose = Number(e.target.value); saveTuning(); });
+['volume', 'buzz', 'sustain'].forEach(name => $(name).addEventListener('input', event => {
+  settings[name] = Number(event.target.value) / (name === 'sustain' ? 1 : 100);
+  $(name + '-value').value = name === 'sustain' ? `${settings[name].toFixed(1)} s` : `${event.target.value}%`;
+  if (name === 'volume' && audio.output) audio.output.gain.setTargetAtTime(settings.volume, audio.context.currentTime, .02);
+}));
+$('labels').addEventListener('click', () => { const on = $('labels').getAttribute('aria-pressed') !== 'true'; $('labels').setAttribute('aria-pressed', on); $('labels').textContent = `Key labels ${on ? 'on' : 'off'}`; $('soundboard').classList.toggle('hide-labels', !on); });
+$('gourd').addEventListener('click', () => { const on = $('gourd').getAttribute('aria-pressed') !== 'true'; $('gourd').setAttribute('aria-pressed', on); $('gourd').textContent = `Gourd ${on ? 'on' : 'off'}`; $('instrument-stage').classList.toggle('with-gourd', on); });
+function playbackData() {
+  return { duration: session.duration, events: session.tracks.flatMap(track => track.events.map(e => ({ ...e, trackId: track.id }))).sort((a, b) => a.at - b.at) };
+}
+function renderTracks() {
+  $('tracks').replaceChildren();
+  (session?.tracks || []).forEach((track, index) => {
+    const row = document.createElement('div'); row.className = 'track-row' + (track.muted ? ' muted' : '');
+    const number = document.createElement('span'); number.className = 'track-number'; number.textContent = String(index + 1).padStart(2, '0');
+    const name = document.createElement('input'); name.type = 'text'; name.value = track.name; name.maxLength = 40;
+    name.className = 'track-name'; name.setAttribute('aria-label', `Name of loop ${index + 1}`); name.disabled = recording;
+    name.addEventListener('change', () => { track.name = name.value.trim() || `Loop ${index + 1}`; name.value = track.name; save(); });
+    const detail = document.createElement('span'); detail.className = 'track-detail'; detail.textContent = `${track.events.length} notes · ${track.sound.voice === 'reference' ? 'Video voice' : 'Synth voice'}`;
+    const mute = document.createElement('button'); mute.className = 'secondary'; mute.textContent = track.muted ? 'Unmute' : 'Mute';
+    mute.setAttribute('aria-label', `${track.muted ? 'Unmute' : 'Mute'} loop ${index + 1}`); mute.setAttribute('aria-pressed', track.muted); mute.disabled = recording;
+    mute.addEventListener('click', () => { track.muted = !track.muted; save(); refresh(); });
+    const level = document.createElement('input'); level.type = 'range'; level.min = 0; level.max = 100; level.value = Math.round(track.level * 100);
+    level.setAttribute('aria-label', `Volume of loop ${index + 1}`); level.disabled = recording;
+    level.addEventListener('input', () => { track.level = Number(level.value) / 100; $('download').disabled = exporting || !session.tracks.some(t => !t.muted && t.level > 0); });
+    level.addEventListener('change', save);
+    const remove = document.createElement('button'); remove.className = 'text-button'; remove.textContent = 'Remove'; remove.setAttribute('aria-label', `Remove loop ${index + 1}`); remove.disabled = recording;
+    remove.addEventListener('click', () => {
+      stopPlayback(); session.tracks = session.tracks.filter(t => t.id !== track.id);
+      if (!session.tracks.length) session = null;
+      save(); refresh(); $('session-status').textContent = 'Loop removed';
+      $('session-time').textContent = timestamp(session?.duration || 0);
+    });
+    row.append(number, name, detail, mute, level, remove); $('tracks').append(row);
+  });
+}
+function refresh() {
+  const hasNotes = !!session?.tracks.length;
+  const audible = hasNotes && session.tracks.some(t => !t.muted && t.level > 0);
+  $('record').innerHTML = recording ? '<span>■</span> Finish' : hasNotes ? '<span>＋</span> Add loop' : '<span>●</span> Record';
+  $('record').classList.toggle('recording', recording); $('record').setAttribute('aria-pressed', recording);
+  $('record').disabled = !recording && (session?.tracks.length >= 8 || (session?.tracks.reduce((sum, t) => sum + t.events.length, 0) || 0) >= 10000);
+  $('play').disabled = !hasNotes || recording; $('download').disabled = !audible || recording || exporting; $('clear').disabled = !hasNotes || recording;
+  $('loop').disabled = recording; $('export-cycles').disabled = recording || exporting;
+  $('play').textContent = playback?.kind === 'session' ? '■ Stop' : '▶ Play';
+  $('demo').textContent = playback?.kind === 'demo' ? '■ Stop example' : '▷ Hear an example'; $('demo').disabled = recording;
+  ['voice', 'buzz', 'sustain'].forEach(id => $(id).disabled = recording);
+  $('loop-help').textContent = recording ? (session ? 'Listen for one loop, then play your new layer. It finishes automatically; Finish saves a shorter part in the same loop.' : 'Your first phrase sets the length for every layer. Press Finish when it is ready.') : hasNotes ? `${session.tracks.length} / 8 layers · ${session.duration.toFixed(1)} seconds per loop. Add loop gives you one loop of lead-in. Each layer keeps its recorded voice.` : 'Record your first phrase to set the loop length. Then add up to 8 layers.';
+  for (const option of $('export-cycles').options) option.disabled = !!session && session.duration * Number(option.value) > 120;
+  if ($('export-cycles').selectedOptions[0].disabled) $('export-cycles').value = '1';
+  renderTracks();
+}
+function save() {
+  try {
+    if (session?.tracks.length) localStorage.setItem(STORAGE, JSON.stringify(session)); else localStorage.removeItem(STORAGE);
+    localStorage.removeItem(LEGACY_STORAGE);
+  } catch { $('session-status').textContent = 'Device storage unavailable · export to keep your mix'; }
+}
+function startTransport(data, kind, start = audio.context.currentTime + .08) {
+  playback = { data, kind, start, cursor: 0, cycle: 0, visual: [] };
+}
+function finishRecording() {
+  if (!recording) return;
+  const wasLayer = !!session, take = draft;
+  const duration = session?.duration || Math.min(120, Math.max(.1, audio.context.currentTime - recordStart));
+  recording = false; draft = null;
+  if (!wasLayer) stopPlayback();
+  if (take.events.length) {
+    if (!session) session = { version: 2, duration, tracks: [] };
+    session.tracks.push({ ...take, events: take.events.filter(e => e.at < duration) });
+    $('session-status').textContent = `${session.tracks.length} layers · saved on device`;
+    if (wasLayer) {
+      looping = true; updateLoopButton();
+      // Keep the backing loop's clock and ringing notes uninterrupted. The new
+      // layer joins at the next unscheduled boundary, never in the middle of a bar.
+      if (playback?.kind === 'session') playback.pendingData = playbackData();
+      else startTransport(playbackData(), 'session');
+      $('session-status').textContent = 'Layer saved · joins the next loop';
+    }
+  } else $('session-status').textContent = 'No notes added · existing loops kept';
+  $('session-time').textContent = timestamp(session?.duration || 0); save(); refresh();
+}
+function stopPlayback() {
+  generation++; playback = null; audio.stop(); $('loop-progress').value = 0; refresh();
+}
+function silence() { finishRecording(); stopPlayback(); $('session-status').textContent = 'Stopped'; }
+$('stop').addEventListener('click', silence);
+$('record').addEventListener('click', async () => {
+  if (recording) { finishRecording(); return; }
+  if (session?.tracks.length >= 8) return;
+  stopPlayback(); const token = generation;
+  if (!await ready() || token !== generation || recording) return;
+  draft = { id: `loop-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, name: `Loop ${(session?.tracks.length || 0) + 1}`, muted: false, level: 1, sound: { voice: settings.voice, buzz: settings.buzz, sustain: settings.sustain }, events: [] };
+  recording = true;
+  if (session) {
+    looping = true; updateLoopButton(); startTransport(playbackData(), 'session');
+    recordStart = playback.start + session.duration;
+    $('session-status').textContent = 'Lead-in · listen to your loop';
+  } else {
+    recordStart = audio.context.currentTime;
+    $('session-status').textContent = 'Recording first loop · up to 2 minutes';
+  }
+  refresh();
+});
+async function beginPlayback(data, kind) {
+  stopPlayback(); const token = generation;
+  if (!await ready() || token !== generation) return;
+  startTransport(data, kind);
+  $('session-status').textContent = kind === 'demo' ? 'An original exploration phrase' : 'Playing your mix'; refresh();
+}
+$('play').addEventListener('click', () => { if (playback?.kind === 'session') silence(); else if (session) beginPlayback(playbackData(), 'session'); });
+function updateLoopButton() { $('loop').setAttribute('aria-pressed', looping); $('loop').textContent = `↻ Loop ${looping ? 'on' : 'off'}`; }
+$('loop').addEventListener('click', () => { looping = !looping; updateLoopButton(); });
+$('demo').addEventListener('click', () => {
+  if (playback?.kind === 'demo') { silence(); return; }
+  const ids = ['1-0','0-1','2-1','1-3','0-3','2-3','1-4','0-5','1-0','2-4','0-1','1-3','2-5','0-3','1-4','0-5'];
+  beginPlayback({ duration: 6.4, events: ids.map((id, i) => ({ id, midi: currentPitch(MbiraMusic.keys.find(k => k.id === id)), at: i * .4 })) }, 'demo');
+});
+$('clear').addEventListener('click', () => { stopPlayback(); session = null; save(); $('session-time').textContent = '00:00'; $('session-status').textContent = 'Ready when you are'; refresh(); });
+$('download').addEventListener('click', async () => {
+  if (!session || exporting) return;
+  const mix = MbiraMusic.mixSession(session, Number($('export-cycles').value));
+  if (!mix.events.length) return;
+  exporting = true; refresh(); $('download').textContent = 'Rendering…';
+  try {
+    const blob = await audio.wav(mix, { ...settings }), url = URL.createObjectURL(blob), link = document.createElement('a');
+    link.href = url; link.download = 'mbira-mix.wav'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch { $('session-status').textContent = 'Export failed. Try fewer loop repetitions.'; }
+  finally { exporting = false; $('download').textContent = 'Export mix WAV ↓'; refresh(); }
+});
+// All recording timestamps and loop boundaries use the same audio clock.
+setInterval(() => {
+  if (recording) {
+    const elapsed = audio.context.currentTime - recordStart;
+    $('session-time').textContent = elapsed < 0 ? `−${(-elapsed).toFixed(1)}s` : timestamp(elapsed);
+    $('session-status').textContent = elapsed < 0 ? 'Lead-in · get ready' : session ? 'Recording new layer' : 'Recording first loop';
+    const length = session?.duration || 120;
+    $('loop-progress').value = elapsed < 0 ? 0 : Math.min(1, elapsed / length);
+    if (elapsed >= length) finishRecording();
+  }
+  const p = playback; if (!p) return;
+  const now = audio.context.currentTime;
+  // Schedule across a loop boundary in the same tick, including very short loops.
+  for (let pass = 0; pass < 3; pass++) {
+    while (p.cursor < p.data.events.length && p.start + p.data.events[p.cursor].at < now + .08) {
+      const event = p.data.events[p.cursor++], time = p.start + event.at;
+      const track = event.trackId ? session?.tracks.find(t => t.id === event.trackId) : null;
+      if (event.trackId && (!track || track.muted || track.level === 0)) continue;
+      if (time >= now - .1) {
+        audio.play(event.midi, track ? { ...settings, ...track.sound, level: track.level } : settings, Math.max(now, time));
+        p.visual.push({ ...event, time });
+      }
+    }
+    const end = p.start + p.data.duration;
+    if (looping && p.kind === 'session' && end <= now + .08 && p.cursor === p.data.events.length) {
+      p.start = end; p.cursor = 0; p.cycle++;
+      if (p.pendingData) { p.data = p.pendingData; p.pendingData = null; if (!recording) $('session-status').textContent = 'Playing all layers'; }
+    }
+    else break;
+  }
+  while (p.visual.length && p.visual[0].time <= now) { const e = p.visual.shift(); flash(e.id, e.midi); }
+  if (!recording) {
+    const elapsed = Math.max(0, Math.min(p.data.duration, now - p.start));
+    $('session-time').textContent = timestamp(elapsed); $('loop-progress').value = elapsed / p.data.duration;
+  }
+  if (!(looping && p.kind === 'session') && now >= p.start + p.data.duration) {
+    playback = null; $('session-status').textContent = 'Playback finished'; $('loop-progress').value = 1; refresh();
+  }
+}, 25);
+
+document.addEventListener('visibilitychange', () => { if (document.hidden) { held.clear(); if (recording || playback) silence(); } });
+window.addEventListener('pagehide', () => { if (recording) silence(); });
+try {
+  const saved = JSON.parse(localStorage.getItem(STORAGE) || localStorage.getItem(LEGACY_STORAGE));
+  session = MbiraMusic.restoreSession(saved);
+  if (session) { $('session-time').textContent = timestamp(session.duration); $('session-status').textContent = `${session.tracks.length} layers · restored session`; }
+} catch { /* Storage can be disabled without preventing play. */ }
+updateNotes(); refresh();

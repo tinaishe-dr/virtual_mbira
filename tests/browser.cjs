@@ -1,0 +1,162 @@
+// Optional integration suite: install playwright locally, or set PLAYWRIGHT_MODULE.
+// Run the development server first, then: node tests/browser.cjs
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const assert = require('node:assert/strict');
+const fs = require('node:fs/promises');
+const path = require('node:path');
+
+(async () => {
+  const browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_PATH ? { executablePath: process.env.BROWSER_PATH } : {}) });
+  const output = path.join(__dirname, '..', 'test-results');
+  await fs.mkdir(output, { recursive: true });
+  try {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.goto(process.env.MBIRA_URL || 'http://localhost:4173');
+    await page.locator('.tine').last().waitFor();
+    assert.equal(await page.locator('.tine').count(), 24);
+    assert.equal(await page.locator('.touch-pad').count(), 24);
+    assert.equal(await page.locator('#tuning-root').inputValue(), 'bb');
+    assert.equal(await page.locator('#tuning-root option').count(), 12);
+    assert.equal(await page.locator('[data-id="1-0"] .note-name').textContent(), 'B♭2');
+    await page.locator('#tuning').selectOption('major');
+    assert.equal(await page.locator('[data-id="0-4"] .note-name').textContent(), 'A4');
+    await page.reload();
+    assert.equal(await page.locator('#tuning-root').inputValue(), 'bb');
+    assert.equal(await page.locator('#tuning').inputValue(), 'major');
+    await page.locator('#tuning-root').selectOption('c');
+    assert.equal(await page.locator('[data-id="1-0"] .note-name').textContent(), 'C2');
+    await page.locator('#tuning-root').selectOption('f');
+    await page.locator('#tuning').selectOption('original');
+    assert.ok(await page.locator('#play').isDisabled());
+    const blockedKeys = await page.locator('.tine').evaluateAll(buttons => buttons.filter(button => {
+      const rect = button.getBoundingClientRect();
+      return document.elementFromPoint(rect.x + rect.width / 2, rect.bottom - 8)?.closest('.tine') !== button;
+    }).map(button => button.dataset.id));
+    assert.deepEqual(blockedKeys, [], 'every tine tip is directly clickable');
+    const upperTips = await page.locator('.tine:not(.lower)').evaluateAll(buttons => buttons
+      .filter(button => button.dataset.id.startsWith('0-'))
+      .map(button => ({ id: button.dataset.id, x: button.getBoundingClientRect().x, tip: button.getBoundingClientRect().bottom }))
+      .sort((a, b) => a.x - b.x));
+    assert.ok(upperTips.every((key, i) => i === 0 || key.tip > upperTips[i - 1].tip), 'upper key tips form an unbroken slope toward the center');
+    assert.ok(upperTips.find(k => k.id === '0-1').x < upperTips.find(k => k.id === '0-2').x, 'C4 sits outside Bb3 in the V');
+    assert.equal(await page.locator('#voice').inputValue(), 'reference');
+    await page.screenshot({ path: path.join(output, 'desktop.png'), fullPage: true });
+    await page.keyboard.press('a');
+    await page.waitForFunction(() => document.getElementById('last-note').textContent.includes('F2'));
+    assert.equal(await page.evaluate(() => audio.context.state), 'running');
+    assert.equal(await page.evaluate(() => [...audio.voices][0][0].constructor.name), 'AudioBufferSourceNode', 'the default voice uses the video-derived sound bank');
+    await page.locator('#stop').click();
+    await page.locator('#voice').selectOption('synth');
+    await page.keyboard.press('a');
+    await page.waitForFunction(() => audio.voices.size > 0);
+    assert.equal(await page.evaluate(() => [...audio.voices][0][0].constructor.name), 'OscillatorNode');
+    await page.locator('#stop').click();
+    await page.locator('#voice').selectOption('reference');
+    await page.locator('#gourd').click();
+    assert.equal(await page.locator('#gourd').getAttribute('aria-pressed'), 'true');
+    await page.screenshot({ path: path.join(output, 'gourd.png'), fullPage: true });
+    await page.locator('#record').click();
+    await page.waitForFunction(() => recording);
+    for (const key of ['a', 'q', 'z', 'd']) { await page.keyboard.press(key); await page.waitForTimeout(100); }
+    await page.locator('#record').click();
+    const take = await page.evaluate(() => structuredClone(session));
+    assert.equal(take.tracks[0].events.length, 4);
+    assert.ok(take.duration > .3);
+    assert.ok(await page.locator('#play').isEnabled());
+    await page.reload();
+    assert.equal(await page.evaluate(() => session.tracks[0].events.length), 4);
+    await page.locator('#loop').click();
+    await page.locator('#play').click();
+    await page.waitForFunction(() => playback?.cycle >= 2);
+    await page.keyboard.press('Escape');
+    assert.equal(await page.evaluate(() => playback), null);
+    assert.equal(await page.evaluate(() => audio.voices.size), 0);
+    const downloadPromise = page.waitForEvent('download');
+    await page.locator('#download').click();
+    const download = await downloadPromise;
+    const wavPath = path.join(output, 'session.wav'); await download.saveAs(wavPath);
+    const wav = await fs.readFile(wavPath);
+    assert.equal(wav.toString('ascii', 0, 4), 'RIFF');
+    assert.equal(wav.readUInt32LE(24), 44100);
+    assert.ok(wav.byteLength > 44100);
+    let peak = 0; for (let i = 44; i < wav.byteLength; i += 2) peak = Math.max(peak, Math.abs(wav.readInt16LE(i)));
+    assert.ok(peak > 100 && peak < 32767, `rendered audio has a nonzero, unclipped signal (${peak})`);
+    // Add a second voice in sync; lead-in notes must not enter the take.
+    await page.locator('#voice').selectOption('synth');
+    await page.locator('#record').click();
+    await page.waitForFunction(() => recording && audio.context.currentTime < recordStart);
+    await page.keyboard.press('z');
+    assert.equal(await page.evaluate(() => draft.events.length), 0);
+    await page.waitForFunction(() => recording && audio.context.currentTime >= recordStart);
+    await page.keyboard.press('q');
+    await page.waitForFunction(() => !recording && session.tracks.length === 2);
+    assert.equal(await page.evaluate(() => session.tracks[0].events.length), 4);
+    assert.equal(await page.evaluate(() => session.tracks[1].events.length), 1);
+    assert.equal(await page.evaluate(() => session.tracks[1].sound.voice), 'synth');
+    assert.equal(await page.evaluate(() => session.duration), take.duration);
+    assert.ok(await page.evaluate(() => playback?.kind === 'session'));
+    await page.getByRole('textbox', { name: 'Name of loop 2' }).fill('Melody');
+    await page.getByRole('textbox', { name: 'Name of loop 2' }).press('Tab');
+    await page.getByRole('button', { name: 'Mute loop 1', exact: true }).click();
+    assert.equal(await page.evaluate(() => MbiraMusic.mixSession(session).events.length), 1);
+    await page.locator('#export-cycles').selectOption('4');
+    const mixDownloadPromise = page.waitForEvent('download');
+    await page.locator('#download').click();
+    const mixDownload = await mixDownloadPromise;
+    await mixDownload.saveAs(path.join(output, 'layered-mix.wav'));
+    const mixWav = await fs.readFile(path.join(output, 'layered-mix.wav'));
+    assert.ok(mixWav.length > wav.length, 'export repeats the layered mix');
+    const densePeak = await page.evaluate(async () => {
+      const context = new OfflineAudioContext(1, 44100, 44100);
+      const output = MbiraAudio.output(context, context.destination); output.gain.value = 1;
+      for (let i = 0; i < 24; i++) MbiraAudio.voice(context, output, 53 + i % 12, .01, { voice: 'reference', buzz: .5, sustain: .8 });
+      const rendered = await context.startRendering();
+      return rendered.getChannelData(0).reduce((peak, value) => Math.max(peak, Math.abs(value)), 0);
+    });
+    assert.ok(densePeak > .01 && densePeak < .99, `dense layered chords remain below full scale (${densePeak})`);
+    await page.reload();
+    assert.equal(await page.evaluate(() => session.tracks.length), 2);
+    assert.equal(await page.evaluate(() => session.tracks[1].name), 'Melody');
+    assert.equal(await page.evaluate(() => session.tracks[0].muted), true);
+    // Cancel a lead-in without replacing either existing layer.
+    await page.locator('#record').click();
+    await page.waitForFunction(() => recording);
+    await page.locator('#record').click();
+    assert.equal(await page.evaluate(() => session.tracks.length), 2);
+    await page.screenshot({ path: path.join(output, 'loop-studio.png'), fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: path.join(output, 'loop-studio-mobile.png'), fullPage: true });
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+    await page.setViewportSize({ width: 1440, height: 1100 });
+    await page.getByRole('button', { name: 'Remove loop 2', exact: true }).click();
+    assert.equal(await page.evaluate(() => session.tracks.length), 1);
+    await page.locator('#tuning').selectOption('minor');
+    assert.equal(await page.locator('[data-id="2-0"] .note-name').textContent(), 'A♭3');
+    await page.locator('#labels').click();
+    assert.equal(await page.locator('#labels').getAttribute('aria-pressed'), 'false');
+    await page.locator('#clear').click();
+    assert.ok(await page.locator('#play').isDisabled());
+    assert.equal(await page.evaluate(() => localStorage.getItem('mbira-session-v2')), null);
+    await page.locator('#demo').click();
+    await page.waitForFunction(() => playback?.kind === 'demo');
+    await page.locator('#stop').click();
+    assert.equal(await page.evaluate(() => playback), null);
+    // Corrupt storage must not prevent the instrument from opening.
+    await page.evaluate(() => localStorage.setItem('mbira-session-v1', '{broken'));
+    await page.reload();
+    assert.ok(await page.locator('#play').isDisabled());
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator('.touch-controls summary').click();
+    const pad = page.locator('.touch-pad').first();
+    await pad.dispatchEvent('pointerdown', { pointerType: 'touch', pointerId: 1 });
+    await page.waitForFunction(() => document.getElementById('last-note').textContent.includes('F3'));
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+    await page.screenshot({ path: path.join(output, 'mobile.png'), fullPage: true });
+    await page.setViewportSize({ width: 320, height: 640 });
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'no horizontal page overflow at 320px');
+    assert.deepEqual(errors, []);
+    console.log('Browser checks passed: playable keys, reference/synth voices, layered recording, lead-in, synchronized duration, per-layer sound, mute, rename, mix export, restore, empty-take preservation, removal, stop, WAV signal, tuning, clear, demo, corrupt storage, touch pads, and responsive layouts.');
+  } finally { await browser.close(); }
+})().catch(error => { console.error(error); process.exitCode = 1; });
