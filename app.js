@@ -19,19 +19,20 @@ try {
   }
 } catch { /* Tuning remains usable when storage is unavailable. */ }
 $('tuning-root').value = tuningRoot; $('tuning').value = tuning; $('transpose').value = transpose;
-const currentPitch = key => MbiraMusic.pitch(key.midi, tuning, transpose, tuningRoot);
+const currentPitch = key => MbiraMusic.keyPitch(key, tuning, transpose, tuningRoot);
 const timestamp = seconds => `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 MbiraMusic.keys.forEach(key => {
   const button = document.createElement('button');
   button.className = 'tine' + (key.bank === 1 ? ' lower' : ''); button.dataset.id = key.id;
   const index = Number(key.id.split('-')[1]);
-  // Put C4 outside Bb3 so the upper bank follows the same V as the lower bank.
-  // IDs and keyboard shortcuts remain stable for saved recordings.
-  const position = key.bank === 0 ? [0, 2, 1, 3, 4, 5, 6][index] : index;
+  // From the center outward, the upper bank is Q, W, E, R, T, Y, U.
+  // Geometry is independent of pitch so moving W beside Q never swaps sounds.
+  const position = index;
   const left = key.bank === 0 ? 3 + (6 - position) * 6.8 : key.bank === 1 ? 6.4 + (6 - position) * 6.8 : 53 + position * 4.5;
   // Cantilever frequency is approximately proportional to inverse length squared.
   const base = [{ midi: 53, length: 58 }, { midi: 41, length: 87 }, { midi: 57, length: 65 }][key.bank];
-  const length = base.length * 1.1 * 2 ** (-(key.midi - base.midi) / 24);
+  const layoutMidi = key.bank === 0 ? [53, 58, 60, 62, 63, 65, 67][index] : key.midi;
+  const length = base.length * 1.1 * 2 ** (-(layoutMidi - base.midi) / 24);
   button.style.setProperty('--left', `${left}%`); button.style.setProperty('--width', key.bank === 2 ? '3.9%' : '4.2%'); button.style.setProperty('--length', `${length}%`);
   button.innerHTML = `<span class="tine-label"><span class="note-name"></span><kbd>${key.shortcut.toUpperCase()}</kbd></span>`;
   button.addEventListener('pointerdown', event => { event.preventDefault(); strike(key); });
@@ -52,6 +53,7 @@ function updateNotes() {
   const root = MbiraMusic.tuningRoots.find(root => root.id === tuningRoot);
   $('tuning-note').textContent = `${root.name} ${tuning === 'original' ? 'mixolydian' : tuning === 'minor' ? 'natural minor' : 'major'} · equal temperament. Traditional instruments may use different intervals. Saved loops keep their recorded pitches.`;
   $('transpose-value').value = `${transpose > 0 ? '+' : ''}${transpose} semitones`;
+  // Tuning changes sound and note labels, never the established key geometry.
   MbiraMusic.keys.forEach(key => { const name = MbiraMusic.noteName(currentPitch(key)), button = buttons.get(key.id); button.querySelector('.note-name').textContent = name; button.setAttribute('aria-label', `${MbiraMusic.banks[key.bank].name}, ${name}, keyboard ${key.shortcut}`); pads.get(key.id).textContent = name; pads.get(key.id).setAttribute('aria-label', button.getAttribute('aria-label')); });
 }
 function flash(id, midi) {
@@ -69,11 +71,11 @@ async function strike(key) {
   if (!await ready() || token !== generation) return;
   const midi = currentPitch(key); audio.play(midi, settings); flash(key.id, midi);
   if (recording) {
-    const at = audio.context.currentTime - recordStart;
-    const limit = session?.duration || 120;
+    const elapsed = audio.context.currentTime - recordStart;
+    const at = session ? elapsed % session.duration : elapsed;
     const noteCount = (session?.tracks.reduce((sum, t) => sum + t.events.length, 0) || 0) + draft.events.length;
-    if (at >= 0 && at < limit && noteCount < 10000) draft.events.push({ id: key.id, midi, at });
-    else if (at >= limit || noteCount >= 10000) finishRecording();
+    if (elapsed >= 0 && elapsed < 120 && noteCount < 10000) draft.events.push({ id: key.id, midi, at });
+    else if (elapsed >= 120 || noteCount >= 10000) finishRecording();
   }
 }
 document.addEventListener('keydown', event => {
@@ -128,6 +130,13 @@ function renderTracks() {
     });
     row.append(number, name, detail, mute, level, remove); $('tracks').append(row);
   });
+  if (recording && draft) {
+    const row = document.createElement('div'); row.className = 'track-row recording-track';
+    const marker = document.createElement('span'); marker.className = 'track-number'; marker.textContent = '●';
+    const name = document.createElement('span'); name.className = 'track-name'; name.textContent = draft.name;
+    const detail = document.createElement('span'); detail.className = 'track-detail'; detail.id = 'draft-note-count'; detail.textContent = `${draft.events.length} notes · recording`;
+    row.append(marker, name, detail); $('tracks').append(row);
+  }
 }
 function refresh() {
   const hasNotes = !!session?.tracks.length;
@@ -140,7 +149,7 @@ function refresh() {
   $('play').textContent = playback?.kind === 'session' ? '■ Stop' : '▶ Play';
   $('demo').textContent = playback?.kind === 'demo' ? '■ Stop example' : '▷ Hear an example'; $('demo').disabled = recording;
   ['voice', 'buzz', 'sustain'].forEach(id => $(id).disabled = recording);
-  $('loop-help').textContent = recording ? (session ? 'Listen for one loop, then play your new layer. It finishes automatically; Finish saves a shorter part in the same loop.' : 'Your first phrase sets the length for every layer. Press Finish when it is ready.') : hasNotes ? `${session.tracks.length} / 8 layers · ${session.duration.toFixed(1)} seconds per loop. Add loop gives you one loop of lead-in. Each layer keeps its recorded voice.` : 'Record your first phrase to set the loop length. Then add up to 8 layers.';
+  $('loop-help').textContent = recording ? (session ? 'Recording now. Play over your existing loops, then press Finish to save this layer. Notes from additional passes join the same loop.' : 'Your first phrase sets the length for every layer. Press Finish when it is ready.') : hasNotes ? `${session.tracks.length} / 8 layers · ${session.duration.toFixed(1)} seconds per loop. Add loop records immediately; press Finish when you are done.` : 'Record your first phrase to set the loop length. Then add up to 8 layers.';
   for (const option of $('export-cycles').options) option.disabled = !!session && session.duration * Number(option.value) > 120;
   if ($('export-cycles').selectedOptions[0].disabled) $('export-cycles').value = '1';
   renderTracks();
@@ -162,7 +171,7 @@ function finishRecording() {
   if (!wasLayer) stopPlayback();
   if (take.events.length) {
     if (!session) session = { version: 2, duration, tracks: [] };
-    session.tracks.push({ ...take, events: take.events.filter(e => e.at < duration) });
+    session.tracks.push({ ...take, events: take.events.filter(e => e.at < duration).sort((a, b) => a.at - b.at) });
     $('session-status').textContent = `${session.tracks.length} layers · saved on device`;
     if (wasLayer) {
       looping = true; updateLoopButton();
@@ -187,12 +196,11 @@ $('record').addEventListener('click', async () => {
   if (!await ready() || token !== generation || recording) return;
   draft = { id: `loop-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, name: `Loop ${(session?.tracks.length || 0) + 1}`, muted: false, level: 1, sound: { voice: settings.voice, buzz: settings.buzz, sustain: settings.sustain }, events: [] };
   recording = true;
+  recordStart = audio.context.currentTime;
   if (session) {
-    looping = true; updateLoopButton(); startTransport(playbackData(), 'session');
-    recordStart = playback.start + session.duration;
-    $('session-status').textContent = 'Lead-in · listen to your loop';
+    looping = true; updateLoopButton(); startTransport(playbackData(), 'session', recordStart);
+    $('session-status').textContent = 'Recording new layer · play now';
   } else {
-    recordStart = audio.context.currentTime;
     $('session-status').textContent = 'Recording first loop · up to 2 minutes';
   }
   refresh();
@@ -227,11 +235,12 @@ $('download').addEventListener('click', async () => {
 setInterval(() => {
   if (recording) {
     const elapsed = audio.context.currentTime - recordStart;
-    $('session-time').textContent = elapsed < 0 ? `−${(-elapsed).toFixed(1)}s` : timestamp(elapsed);
-    $('session-status').textContent = elapsed < 0 ? 'Lead-in · get ready' : session ? 'Recording new layer' : 'Recording first loop';
+    $('session-time').textContent = timestamp(elapsed);
+    $('session-status').textContent = session ? 'Recording new layer · press Finish to save' : 'Recording first loop';
+    if ($('draft-note-count')) $('draft-note-count').textContent = `${draft.events.length} notes · recording`;
     const length = session?.duration || 120;
-    $('loop-progress').value = elapsed < 0 ? 0 : Math.min(1, elapsed / length);
-    if (elapsed >= length) finishRecording();
+    $('loop-progress').value = session ? (elapsed % length) / length : Math.min(1, elapsed / length);
+    if (elapsed >= 120) finishRecording();
   }
   const p = playback; if (!p) return;
   const now = audio.context.currentTime;

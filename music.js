@@ -6,6 +6,10 @@
     { name: 'Right', shortcuts: 'zxcvbnm,./', midi: [57, 65, 67, 69, 70, 72, 74, 75, 77, 79] }
   ];
   const keys = banks.flatMap((bank, bankIndex) => bank.midi.map((midi, i) => ({ id: `${bankIndex}-${i}`, midi, bank: bankIndex, shortcut: bank.shortcuts[i] })));
+  // Keep the live key mapping separate from stored events, which retain their pitches.
+  function keyPitch(key, tuning = 'original', transpose = 0, root = 'f') {
+    return pitch(key.midi, tuning, transpose, root);
+  }
   // Root offsets are relative to the prototype's F layout, within one octave.
   const tuningRoots = [
     { id: 'bb', name: 'B♭', offset: 5 },
@@ -55,7 +59,7 @@
     samples.forEach((sample, i) => view.setInt16(44 + i * 2, Math.max(-1, Math.min(1, sample)) * (sample < 0 ? 32768 : 32767), true));
     return data;
   }
-  const api = { banks, keys, tuningRoots, pitch, frequency, noteName, validSession, restoreSession, mixSession, encodeWav };
+  const api = { banks, keys, tuningRoots, pitch, keyPitch, frequency, noteName, validSession, restoreSession, mixSession, encodeWav };
   if (typeof module !== 'undefined') module.exports = api;
   root.MbiraMusic = api;
 })(globalThis);

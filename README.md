@@ -12,7 +12,7 @@ For a stable local address and reliable browser storage, install Node.js 18 or l
 node server.js
 ```
 
-Open **http://localhost:4173**. Alternatively, use `npm start`. Set `PORT` to choose another port. The development server listens only on your computer. For hosting, serve `index.html`, `styles.css`, `music.js`, `reference-bank.js`, `audio.js`, and `app.js` with any static website host.
+Open **http://localhost:4173**. Alternatively, use `npm start`. Set `PORT` to choose another port. The development server listens only on your computer. For hosting, serve `index.html`, `styles.css`, `gourd.css`, the `assets/` directory, `music.js`, `reference-bank.js`, `audio.js`, and `app.js` with any static website host.
 
 ## Play
 
@@ -24,9 +24,10 @@ Open **http://localhost:4173**. Alternatively, use `npm start`. Set `PORT` to ch
 - **Escape** stops the current recording or playback and silences all voices.
 - Use **Voice** to compare the video-derived sound with the original synthesizer. **Tuning**, **Pitch**, **Rattle**, **Resonance**, and **Volume** shape the sound.
 - **Tuning key** defaults to **B♭ (B flat)**. Choose from all 12 roots: B♭, C, D♭, D, E♭, E, F, G♭, G, A♭, A, and B. **Scale** offers the original mixolydian intervals, major, or natural minor. Root, scale, and extra pitch shift are remembered on this browser; key and touch-pad labels update immediately. Existing loops retain their recorded pitches.
+- In B♭ tuning, **W plays F4** and **E plays E♭4** at zero extra pitch shift. W sits directly beside Q (B♭3), with E on the other side of W. Their note labels match their sounds. Other tuning roots retain their previous pitch mappings; saved loops keep the notes recorded at the time.
 - Toggle labels or the optional gourd surround. The surround is visual and does not change the sound.
 
-The first interaction enables audio. Headphones help with low notes. Both voices use an output compressor and a 32-voice limit. Keys are extended by 10%, and the upper C4 and B♭3 positions are arranged in pitch order to preserve the V-shaped outline. Their keyboard shortcuts and recording IDs are unchanged.
+The first interaction enables audio. Headphones help with low notes. Both voices use an output compressor and a 32-voice limit. Keys are extended by 10%. From the center outward, the upper bank follows Q, W, E, R, T, Y, U, with visual lengths maintaining the V-shaped outline independently of their pitches. Keyboard shortcuts and recording IDs are unchanged.
 
 ## Video reference voice
 
@@ -36,7 +37,7 @@ This is a reference-derived approximation, **not an exact isolated recording of 
 
 ## Record and export
 
-Press **Record**, play your first phrase, and press **Finish**. This sets the shared loop length, including opening and closing silence (up to two minutes). Press **Add loop** to build another layer: the existing mix plays once as a lead-in, then the next full loop records automatically. Notes played during the lead-in are practice only. A new layer joins on the next available loop boundary without interrupting the backing tracks. You can also press **Finish** early; the remaining part of that layer stays silent.
+Press **Record**, play your first phrase, and press **Finish**. This sets the shared loop length, including opening and closing silence (up to two minutes). Press **Add loop** to start recording another layer immediately while the existing mix plays. The recording row shows the captured note count. Press **Finish** to save it; recording also stops after two minutes. You can play over several passes: every note is placed at its position within the shared loop, so additional passes build up the same layer. A saved layer joins on the next available loop boundary without interrupting the backing tracks. Finishing a shorter part leaves the remainder of its loop silent.
 
 Build up to **8 layers**, with a shared limit of 10,000 note events. Each layer keeps its recorded pitches, voice, rattle, and resonance, so you can change the instrument settings before recording a contrasting part. Rename layers, adjust their volumes, mute them, or remove them. Mute and level changes apply to upcoming notes; existing notes finish ringing. Removing a layer stops playback. Empty takes leave the existing mix intact. **Play** plays the mix once; **Loop** repeats it. Adding a layer enables looping automatically.
 
@@ -48,7 +49,7 @@ Switching away from the page stops playback and finishes an active recording to 
 
 ## Design and cultural context
 
-The wooden board, staggered left banks, right bank, pressure rod, wire ties, flattened tips, finger hole, and optional gourd surround were informed by the owner's reference photographs. These photographs are not bundled or uploaded by the application.
+The wooden board, staggered left banks, right bank, pressure rod, wire ties, flattened tips, finger hole, and optional gourd surround were informed by the owner's reference photographs. Gourd mode follows the later IMG_5221 reference: a deep golden-yellow shell, a low-mounted weathered board, a foil-colored support, perimeter wire, crown-cap rattles, and a lower metal rattle bar. This view is drawn with local SVG and CSS; the photos are not bundled or uploaded by the application. Gourd off retains the standalone board view.
 
 The prototype's original F mixolydian pitch collection is available by choosing F and Original intervals. New sessions default to B♭ with those same intervals, putting the lowest key at B♭2; use Major if you want B♭ major, or Pitch −12 for an octave lower. All root and scale options are Western equal-tempered explorations, **not authentic Nyamaropa tuning presets**. A B♭ root alone does not specify an individual mbira's intervals or exact tuning. Traditional mbiras vary between makers, players, and communities; this is an educational digital interpretation rather than an acoustic replica. The demonstration is an original exploration phrase, not a traditional composition.
 

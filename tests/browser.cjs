@@ -20,6 +20,19 @@ const path = require('node:path');
     assert.equal(await page.locator('#tuning-root').inputValue(), 'bb');
     assert.equal(await page.locator('#tuning-root option').count(), 12);
     assert.equal(await page.locator('[data-id="1-0"] .note-name').textContent(), 'B♭2');
+    assert.equal(await page.locator('[data-id="0-1"] .note-name').textContent(), 'F4');
+    assert.equal(await page.locator('[data-id="0-2"] .note-name').textContent(), 'E♭4');
+    const bbLayout = await page.locator('.tine').evaluateAll(keys => keys.map(key => key.getAttribute('style')));
+    await page.evaluate(() => {
+      window.playedPitches = [];
+      const originalPlay = audio.play.bind(audio);
+      audio.play = (midi, ...args) => { window.playedPitches.push(midi); return originalPlay(midi, ...args); };
+    });
+    await page.keyboard.press('w');
+    await page.waitForFunction(() => document.getElementById('last-note').textContent.includes('F4'));
+    await page.keyboard.press('e');
+    await page.waitForFunction(() => document.getElementById('last-note').textContent.includes('E♭4'));
+    assert.deepEqual(await page.evaluate(() => window.playedPitches), [65, 63], 'W and E send F4 and Eb4 to the sound engine');
     await page.locator('#tuning').selectOption('major');
     assert.equal(await page.locator('[data-id="0-4"] .note-name').textContent(), 'A4');
     await page.reload();
@@ -29,6 +42,7 @@ const path = require('node:path');
     assert.equal(await page.locator('[data-id="1-0"] .note-name').textContent(), 'C2');
     await page.locator('#tuning-root').selectOption('f');
     await page.locator('#tuning').selectOption('original');
+    assert.deepEqual(await page.locator('.tine').evaluateAll(keys => keys.map(key => key.getAttribute('style'))), bbLayout, 'the sound swap does not move or resize the keys');
     assert.ok(await page.locator('#play').isDisabled());
     const blockedKeys = await page.locator('.tine').evaluateAll(buttons => buttons.filter(button => {
       const rect = button.getBoundingClientRect();
@@ -40,7 +54,7 @@ const path = require('node:path');
       .map(button => ({ id: button.dataset.id, x: button.getBoundingClientRect().x, tip: button.getBoundingClientRect().bottom }))
       .sort((a, b) => a.x - b.x));
     assert.ok(upperTips.every((key, i) => i === 0 || key.tip > upperTips[i - 1].tip), 'upper key tips form an unbroken slope toward the center');
-    assert.ok(upperTips.find(k => k.id === '0-1').x < upperTips.find(k => k.id === '0-2').x, 'C4 sits outside Bb3 in the V');
+    assert.deepEqual(upperTips.map(k => k.id), ['0-6', '0-5', '0-4', '0-3', '0-2', '0-1', '0-0'], 'W sits directly beside Q, with E on the other side of W');
     assert.equal(await page.locator('#voice').inputValue(), 'reference');
     await page.screenshot({ path: path.join(output, 'desktop.png'), fullPage: true });
     await page.keyboard.press('a');
@@ -56,7 +70,22 @@ const path = require('node:path');
     await page.locator('#voice').selectOption('reference');
     await page.locator('#gourd').click();
     assert.equal(await page.locator('#gourd').getAttribute('aria-pressed'), 'true');
+    await page.locator('#instrument-stage').scrollIntoViewIfNeeded();
+    const gourdHits = await page.locator('.tine').evaluateAll(buttons => buttons.every(button => {
+      const r = button.getBoundingClientRect();
+      return document.elementFromPoint(r.x + r.width / 2, r.bottom - 3)?.closest('.tine') === button;
+    }));
+    assert.ok(gourdHits, 'all 24 keys remain clickable inside the gourd');
+    assert.ok(await page.evaluate(() => {
+      const board = document.getElementById('soundboard').getBoundingClientRect();
+      const shell = document.getElementById('instrument-stage').getBoundingClientRect();
+      return board.top > shell.top + shell.height * .4 && board.bottom < shell.bottom;
+    }), 'the board sits low inside the deep gourd');
     await page.screenshot({ path: path.join(output, 'gourd.png'), fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+    await page.screenshot({ path: path.join(output, 'gourd-mobile.png'), fullPage: true });
+    await page.setViewportSize({ width: 1440, height: 1100 });
     await page.locator('#record').click();
     await page.waitForFunction(() => recording);
     for (const key of ['a', 'q', 'z', 'd']) { await page.keyboard.press(key); await page.waitForTimeout(100); }
@@ -83,24 +112,28 @@ const path = require('node:path');
     assert.ok(wav.byteLength > 44100);
     let peak = 0; for (let i = 44; i < wav.byteLength; i += 2) peak = Math.max(peak, Math.abs(wav.readInt16LE(i)));
     assert.ok(peak > 100 && peak < 32767, `rendered audio has a nonzero, unclipped signal (${peak})`);
-    // Add a second voice in sync; lead-in notes must not enter the take.
+    // Regression: Add loop must capture immediate notes, including later passes.
     await page.locator('#voice').selectOption('synth');
     await page.locator('#record').click();
-    await page.waitForFunction(() => recording && audio.context.currentTime < recordStart);
+    await page.waitForFunction(() => recording);
     await page.keyboard.press('z');
-    assert.equal(await page.evaluate(() => draft.events.length), 0);
-    await page.waitForFunction(() => recording && audio.context.currentTime >= recordStart);
+    assert.equal(await page.evaluate(() => draft.events.length), 1);
+    await page.waitForFunction(() => document.getElementById('draft-note-count').textContent.includes('1 notes'));
+    await page.waitForTimeout(take.duration * 1000 + 100);
+    assert.equal(await page.evaluate(() => recording), true, 'adding a layer stays active until Finish');
     await page.keyboard.press('q');
+    await page.locator('#record').click();
     await page.waitForFunction(() => !recording && session.tracks.length === 2);
     assert.equal(await page.evaluate(() => session.tracks[0].events.length), 4);
-    assert.equal(await page.evaluate(() => session.tracks[1].events.length), 1);
+    assert.equal(await page.evaluate(() => session.tracks[1].events.length), 2);
+    assert.ok(await page.evaluate(() => MbiraMusic.validSession(session)), 'multi-pass notes are sorted and remain inside the shared loop');
     assert.equal(await page.evaluate(() => session.tracks[1].sound.voice), 'synth');
     assert.equal(await page.evaluate(() => session.duration), take.duration);
     assert.ok(await page.evaluate(() => playback?.kind === 'session'));
     await page.getByRole('textbox', { name: 'Name of loop 2' }).fill('Melody');
     await page.getByRole('textbox', { name: 'Name of loop 2' }).press('Tab');
     await page.getByRole('button', { name: 'Mute loop 1', exact: true }).click();
-    assert.equal(await page.evaluate(() => MbiraMusic.mixSession(session).events.length), 1);
+    assert.equal(await page.evaluate(() => MbiraMusic.mixSession(session).events.length), 2);
     await page.locator('#export-cycles').selectOption('4');
     const mixDownloadPromise = page.waitForEvent('download');
     await page.locator('#download').click();
@@ -120,7 +153,7 @@ const path = require('node:path');
     assert.equal(await page.evaluate(() => session.tracks.length), 2);
     assert.equal(await page.evaluate(() => session.tracks[1].name), 'Melody');
     assert.equal(await page.evaluate(() => session.tracks[0].muted), true);
-    // Cancel a lead-in without replacing either existing layer.
+    // Finishing an empty layer keeps the existing mix intact.
     await page.locator('#record').click();
     await page.waitForFunction(() => recording);
     await page.locator('#record').click();
@@ -157,6 +190,6 @@ const path = require('node:path');
     await page.setViewportSize({ width: 320, height: 640 });
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'no horizontal page overflow at 320px');
     assert.deepEqual(errors, []);
-    console.log('Browser checks passed: playable keys, reference/synth voices, layered recording, lead-in, synchronized duration, per-layer sound, mute, rename, mix export, restore, empty-take preservation, removal, stop, WAV signal, tuning, clear, demo, corrupt storage, touch pads, and responsive layouts.');
+    console.log('Browser checks passed: playable keys, reference/synth voices, immediate layer recording, multi-pass overdubs, synchronized duration, per-layer sound, mute, rename, mix export, restore, empty-take preservation, removal, stop, WAV signal, tuning, clear, demo, corrupt storage, touch pads, and responsive layouts.');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -1035,3 +1035,6 @@ footer span {
 .mix-export {display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:16px;font-size:11px;color:#687560}
 .mix-export select {width:100px}
 @media(max-width:740px){.recorder-bar{gap:14px}.track-row{grid-template-columns:22px minmax(0,1fr) 68px;gap:8px}.track-name{grid-column:2}.track-detail{grid-column:2;grid-row:2}.track-row .secondary{grid-column:3;grid-row:1}.track-row input[type=range]{grid-column:2;grid-row:3}.track-row .text-button{grid-column:3;grid-row:3;padding:4px}.mix-export{flex-wrap:wrap;gap:8px;justify-content:flex-start}.mix-export label{font-size:10px}.mix-export button{margin-left:auto;font-size:11px;padding:10px}.recorder .transport{flex-wrap:wrap}}
+.recording-track { border-color: #b98668; background: #f5eee2; }
+.recording-track .track-number { color: #b54938; }
+.recording-track .track-detail { color: #8a4b35; }
