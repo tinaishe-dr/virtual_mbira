@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { keys, tuningRoots, pitch, frequency, noteName, validSession, restoreSession, mixSession, encodeWav } = require('../music');
+const { keys, tuningRoots, pitch, keyPitch, frequency, noteName, validSession, restoreSession, mixSession, encodeWav } = require('../music');
 
 test('the original instrument preserves all 24 unique playable keys', () => {
   assert.equal(keys.length, 24);
@@ -34,6 +34,19 @@ test('Bb roots, scale intervals and all twelve tunings transpose consistently', 
     assert.ok(base - 12 >= 20 && base + 12 <= 100);
     assert.equal(pitch(key.midi, scale, 12, root.id), base + 12);
   }
+});
+
+test('Bb upper keys match the owner’s W/E mapping without changing other roots', () => {
+  const w = keys.find(k => k.shortcut === 'w'), e = keys.find(k => k.shortcut === 'e');
+  for (const scale of ['original', 'major', 'minor']) {
+    assert.equal(keyPitch(w, scale, 0, 'bb'), 65);
+    assert.equal(keyPitch(e, scale, 0, 'bb'), 63);
+    assert.equal(keyPitch(w, scale, 12, 'bb'), 77);
+  }
+  assert.equal(noteName(keyPitch(w, 'original', 0, 'bb')), 'F4');
+  assert.equal(noteName(keyPitch(e, 'original', 0, 'bb')), 'E♭4');
+  assert.equal(keyPitch(w, 'original', 0, 'f'), 60);
+  assert.equal(keyPitch(e, 'original', 0, 'f'), 58);
 });
 test('stored sessions reject invalid timing, notes, and excessive duration', () => {
   const valid = { version: 1, duration: 1, events: [{ id: '1-0', midi: 41, at: .1 }] };
