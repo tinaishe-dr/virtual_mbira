@@ -1,4 +1,4 @@
-# Mbira — a little space to play
+# Mbira - a little space to play
 
 A complete browser instrument inspired by the mbira dzavadzimu. Play 24 metal keys, explore tunings, record phrases, loop them, and export audio. Rebuilt from the original p5.js sketch with native Web Audio and accessible HTML controls.
 <img width="1548" height="1096" alt="Virtual Mbira site" src="https://github.com/user-attachments/assets/8c927ee0-6d33-45aa-9328-84b56979f07d" />
@@ -65,16 +65,16 @@ node --test tests/music.test.js
 
 An optional browser integration suite is included in `tests/browser.cjs`. With Playwright and its Chromium browser installed, start the development server and run `node tests/browser.cjs`. You can set `PLAYWRIGHT_MODULE` and `BROWSER_PATH` to use existing installations. The suite checks playback, recording, storage recovery, exported audio, and desktop/mobile layouts, and writes screenshots under `test-results/`.
 
-- `index.html` — application structure and accessible controls
-- `styles.css` — responsive studio and instrument construction
-- `music.js` — key layout, tuning, session validation, WAV encoding
-- `audio.js` — polyphonic synthesis and offline rendering
-- `reference-bank.js` — generated PCM sound bank derived from the reference performance
-- `scripts/build-reference-bank.py` — reproducible sound-bank extraction using NumPy and mono 22050 Hz float32 audio
-- `app.js` — pointer/keyboard input, transport, audio-clock scheduling, local saving
-- `server.js` — dependency-free local development server
-- `tests/music.test.js` — note mapping, tuning, session validation, and WAV tests
-- `virtual_mbira/v_mbira.js` — preserved original p5.js experiment; not loaded by the app
+- `index.html` - application structure and accessible controls
+- `styles.css` - responsive studio and instrument construction
+- `music.js` - key layout, tuning, session validation, WAV encoding
+- `audio.js` - polyphonic synthesis and offline rendering
+- `reference-bank.js` - generated PCM sound bank derived from the reference performance
+- `scripts/build-reference-bank.py` - reproducible sound-bank extraction using NumPy and mono 22050 Hz float32 audio
+- `app.js` - pointer/keyboard input, transport, audio-clock scheduling, local saving
+- `server.js` - dependency-free local development server
+- `tests/music.test.js` - note mapping, tuning, session validation, and WAV tests
+- `virtual_mbira/v_mbira.js` - preserved original p5.js experiment; not loaded by the app
 
 Manual checks: play multiple keys, record a short phrase, loop it, export a WAV, reload to restore the take, try a narrow screen and the touch pads, and press Escape during playback. Test with the device's audio output enabled.
 
