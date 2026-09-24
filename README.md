@@ -33,6 +33,11 @@ The first interaction enables audio. Headphones help with low notes. Both voices
 
 ## Video reference voice
 
+
+https://github.com/user-attachments/assets/658c3942-96a7-4153-807e-813ff90cdba7
+
+
+
 The default voice uses eight selected strikes from the supplied mbira performance. Frequency isolation retains the early attack and metallic resonances; fitted, decaying resonances replace overlapping ringing tails. A short high-frequency contact sample supplies the adjustable rattle. The closest sampled root is transposed for each playable pitch. Live playback and WAV export use the same bank, which is bundled locally in `reference-bank.js` (about 1.7 MB); no video upload or runtime network request is required.
 
 This is a reference-derived approximation, **not an exact isolated recording of every key**. The performance contains overlapping notes, and pitches outside the sampled range are transposed. The existing tunings remain unchanged; they do not claim to reproduce the video's complete tuning. The original synthesized voice remains available for comparison.
