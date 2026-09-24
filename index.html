@@ -8,6 +8,7 @@
   <title>Mbira — A little space to play</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="gourd.css">
+  <link rel="stylesheet" href="nyunga.css">
   <script defer src="music.js"></script>
   <script defer src="reference-bank.js"></script>
   <script defer src="audio.js"></script>
@@ -19,6 +20,8 @@
     <section class="intro"><div><p class="eyebrow">ROOTED IN ZIMBABWE. PLAYED ANYWHERE.</p><h1>A little space to <em>play.</em></h1><p class="lede">Find a rhythm. Follow your curiosity. Make it your own.</p></div><div class="audio-status" id="audio-status">● Sound starts with your first note</div></section>
     <div class="studio">
       <section class="instrument-panel" aria-label="Playable mbira">
+        <div class="instrument-picker"><label for="instrument-type">Instrument</label><select id="instrument-type"><option value="dzavadzimu">Mbira Dzavadzimu · 24 keys</option><option value="nyunga">Nyunga Nyunga · 15 keys</option></select></div>
+        <p id="mapping-help" class="field-note" hidden>15 keys, numbered left to right. Select a key to identify it. Notes and keyboard mappings will be added next.</p>
         <div class="panel-heading"><span><span class="live-dot"></span> THE SOUNDBOARD</span><div><button id="gourd" class="text-button" aria-pressed="true">Gourd on</button><button id="labels" class="text-button" aria-pressed="false">Key labels off</button></div></div>
         <div class="instrument-stage with-gourd" id="instrument-stage"><div class="gourd-shell" aria-hidden="true"></div><div class="soundboard hide-labels" id="soundboard"><div class="wood-engraving">MBIRA <span>24 KEYS · ENDLESS POSSIBILITIES</span></div><div class="key-banks" id="key-banks"><div class="pressure-bar" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="finger-hole" aria-hidden="true"></div><div class="board-rattle" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="board-stamp" aria-hidden="true">DZAVADZIMU<br><span>INSPIRED</span></div></div></div>
         <div class="instrument-footer"><span><span class="keycap">A</span> Use your keyboard or tap the keys</span><span id="last-note" aria-live="off">Your next note is waiting</span></div>

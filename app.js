@@ -4,6 +4,7 @@ const audio = new MbiraAudio();
 const settings = { volume: .65, buzz: 1, sustain: 1, voice: 'reference' };
 let tuning = 'original', tuningRoot = 'bb', transpose = 0, recording = false, recordStart = 0, session = null, looping = false, playback = null, generation = 0;
 const buttons = new Map(), pads = new Map(), animations = new Map(), held = new Set();
+let instrumentType = 'dzavadzimu';
 const STORAGE = 'mbira-session-v2';
 const LEGACY_STORAGE = 'mbira-session-v1';
 let draft = null, exporting = false;
@@ -67,6 +68,7 @@ async function ready() {
   catch (error) { $('audio-status').textContent = 'Sound unavailable — try a current browser'; $('session-status').textContent = error.message; return false; }
 }
 async function strike(key) {
+  if (instrumentType === 'nyunga') return;
   const token = generation;
   if (!await ready() || token !== generation) return;
   const midi = currentPitch(key); audio.play(midi, settings); flash(key.id, midi);
@@ -143,11 +145,11 @@ function refresh() {
   const audible = hasNotes && session.tracks.some(t => !t.muted && t.level > 0);
   $('record').innerHTML = recording ? '<span>■</span> Finish' : hasNotes ? '<span>＋</span> Add loop' : '<span>●</span> Record';
   $('record').classList.toggle('recording', recording); $('record').setAttribute('aria-pressed', recording);
-  $('record').disabled = !recording && (session?.tracks.length >= 8 || (session?.tracks.reduce((sum, t) => sum + t.events.length, 0) || 0) >= 10000);
+  $('record').disabled = instrumentType === 'nyunga' || !recording && (session?.tracks.length >= 8 || (session?.tracks.reduce((sum, t) => sum + t.events.length, 0) || 0) >= 10000);
   $('play').disabled = !hasNotes || recording; $('download').disabled = !audible || recording || exporting; $('clear').disabled = !hasNotes || recording;
   $('loop').disabled = recording; $('export-cycles').disabled = recording || exporting;
   $('play').textContent = playback?.kind === 'session' ? '■ Stop' : '▶ Play';
-  $('demo').textContent = playback?.kind === 'demo' ? '■ Stop example' : '▷ Hear an example'; $('demo').disabled = recording;
+  $('demo').textContent = playback?.kind === 'demo' ? '■ Stop example' : '▷ Hear an example'; $('demo').disabled = recording || instrumentType === 'nyunga';
   ['voice', 'buzz', 'sustain'].forEach(id => $(id).disabled = recording);
   $('loop-help').textContent = recording ? (session ? 'Recording now. Play over your existing loops, then press Finish to save this layer. Notes from additional passes join the same loop.' : 'Your first phrase sets the length for every layer. Press Finish when it is ready.') : hasNotes ? `${session.tracks.length} / 8 layers · ${session.duration.toFixed(1)} seconds per loop. Add loop records immediately; press Finish when you are done.` : 'Record your first phrase to set the loop length. Then add up to 8 layers.';
   for (const option of $('export-cycles').options) option.disabled = !!session && session.duration * Number(option.value) > 120;
@@ -280,3 +282,36 @@ try {
   if (session) { $('session-time').textContent = timestamp(session.duration); $('session-status').textContent = `${session.tracks.length} layers · restored session`; }
 } catch { /* Storage can be disabled without preventing play. */ }
 updateNotes(); refresh();
+
+// Nyunga Nyunga is an unmapped interface until the owner supplies its pitches.
+for (let index = 0; index < 15; index++) {
+  const key = document.createElement('button');
+  key.className = 'tine nyunga-key';
+  key.dataset.number = index + 1;
+  key.style.setProperty('--left', `${2 + index * 6.35}%`);
+  key.style.setProperty('--width', '5.5%');
+  const distance = Math.abs(index - 7);
+  key.style.setProperty('--length', `${(index % 2 === 0 ? 91 : 66) - distance * 2.4}%`);
+  key.innerHTML = `<span class="tine-label">${index + 1}</span>`;
+  key.setAttribute('aria-label', `Nyunga Nyunga key ${index + 1}, mapping pending`);
+  key.addEventListener('click', () => {
+    document.querySelectorAll('.nyunga-key').forEach(button => button.classList.remove('active'));
+    key.classList.add('active');
+    $('last-note').textContent = `Key ${index + 1} · mapping pending`;
+  });
+  $('key-banks').append(key);
+}
+$('instrument-type').addEventListener('change', event => {
+  silence();
+  instrumentType = event.target.value;
+  const nyunga = instrumentType === 'nyunga';
+  $('instrument-stage').classList.toggle('nyunga', nyunga);
+  $('mapping-help').hidden = !nyunga;
+  $('labels').hidden = nyunga;
+  document.querySelector('.instrument-footer > span:first-child').textContent = nyunga ? 'Select keys 1–15 to identify their positions' : 'Use your keyboard or tap the keys';
+  document.querySelector('.touch-controls').hidden = nyunga;
+  document.querySelector('.wood-engraving').innerHTML = nyunga ? 'NYUNGA NYUNGA <span>15 KEYS</span>' : 'MBIRA <span>24 KEYS · ENDLESS POSSIBILITIES</span>';
+  for (const id of ['tuning-root', 'tuning', 'transpose']) $(id).disabled = nyunga;
+  $('last-note').textContent = nyunga ? 'Select a numbered key' : 'Your next note is waiting';
+  refresh();
+});
