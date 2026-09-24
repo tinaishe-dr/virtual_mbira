@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#182822">
+  <meta name="description" content="An expressive, playable mbira-inspired instrument. Explore 24 keys, shape your sound, and record your own loops.">
+  <title>Mbira — A little space to play</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="gourd.css">
+  <script defer src="music.js"></script>
+  <script defer src="reference-bank.js"></script>
+  <script defer src="audio.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="site-header"><a class="brand" href="./"><span class="brand-mark">Ⅲ</span> mbira<span class="brand-sub">VIRTUAL INSTRUMENT</span></a><a href="#about">The instrument <span aria-hidden="true">↗</span></a></header>
+  <main>
+    <section class="intro"><div><p class="eyebrow">ROOTED IN ZIMBABWE. PLAYED ANYWHERE.</p><h1>A little space to <em>play.</em></h1><p class="lede">Find a rhythm. Follow your curiosity. Make it your own.</p></div><div class="audio-status" id="audio-status">● Sound starts with your first note</div></section>
+    <div class="studio">
+      <section class="instrument-panel" aria-label="Playable mbira">
+        <div class="panel-heading"><span><span class="live-dot"></span> THE SOUNDBOARD</span><div><button id="gourd" class="text-button" aria-pressed="false">Gourd off</button><button id="labels" class="text-button" aria-pressed="true">Key labels on</button></div></div>
+        <div class="instrument-stage" id="instrument-stage"><div class="gourd-shell" aria-hidden="true"></div><div class="soundboard" id="soundboard"><div class="wood-engraving">MBIRA <span>24 KEYS · ENDLESS POSSIBILITIES</span></div><div class="key-banks" id="key-banks"><div class="pressure-bar" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="finger-hole" aria-hidden="true"></div><div class="board-rattle" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="board-stamp" aria-hidden="true">DZAVADZIMU<br><span>INSPIRED</span></div></div></div>
+        <div class="instrument-footer"><span><span class="keycap">A</span> Use your keyboard or tap the keys</span><span id="last-note" aria-live="off">Your next note is waiting</span></div>
+        <details class="touch-controls"><summary>Larger touch pads</summary><div id="touch-pads"></div></details>
+      </section>
+      <aside class="controls" aria-label="Instrument settings">
+        <p class="eyebrow">MAKE IT YOURS</p><h2>Shape your sound</h2>
+        <label for="voice">Voice</label><select id="voice"><option value="reference">Your mbira · video reference</option><option value="synth">Original synthesized voice</option></select><p class="field-note">Built from filtered strikes in your video, with reconstructed ringing tails.</p>
+        <label for="tuning-root">Tuning key</label><select id="tuning-root" aria-describedby="tuning-note"></select>
+        <label for="tuning">Scale</label><select id="tuning"><option value="original">Original intervals · mixolydian</option><option value="major">Major</option><option value="minor">Natural minor</option></select><p class="field-note" id="tuning-note">B♭ tuning · equal temperament. Traditional instruments may use different intervals.</p>
+        <label for="transpose">Pitch <output id="transpose-value">0 semitones</output></label><input id="transpose" type="range" min="-12" max="12" value="0" step="1">
+        <label for="volume">Volume <output id="volume-value">65%</output></label><input id="volume" type="range" min="0" max="100" value="65">
+        <label for="buzz">Rattle <output id="buzz-value">25%</output></label><input id="buzz" type="range" min="0" max="100" value="25"><p class="field-note">A textured buzz inspired by the instrument’s rattles.</p>
+        <label for="sustain">Resonance <output id="sustain-value">1.8 s</output></label><input id="sustain" type="range" min="0.4" max="3.5" value="1.8" step="0.1">
+        <div class="control-divider"></div><button id="demo" class="secondary full">▷ Hear an example</button><button id="stop" class="text-button full">Silence all sound <kbd>Esc</kbd></button>
+      </aside>
+    </div>
+    <section class="recorder" aria-label="Record and loop">
+      <div class="recorder-bar">
+        <div class="recorder-title"><p class="eyebrow">BUILD A LITTLE RHYTHM</p><h2>Your loop studio</h2></div>
+        <div class="transport"><button id="record" class="record-button"><span>●</span> Record</button><button id="play" class="secondary" disabled>▶ Play</button><button id="loop" class="secondary" aria-pressed="false">↻ Loop off</button></div>
+        <div class="session-info"><strong id="session-time">00:00</strong><span id="session-status" role="status">Ready when you are</span></div>
+        <button id="clear" class="text-button" disabled>Clear all</button>
+      </div>
+      <p class="loop-help" id="loop-help">Record your first phrase to set the loop length. Then add up to 8 layers.</p>
+      <progress id="loop-progress" max="1" value="0" aria-label="Loop progress"></progress>
+      <div id="tracks" class="tracks" aria-label="Recorded loop tracks"></div>
+      <div class="mix-export"><label for="export-cycles">Export length</label><select id="export-cycles"><option value="1">1 loop</option><option value="2">2 loops</option><option value="4">4 loops</option><option value="8">8 loops</option></select><button id="download" class="secondary" disabled>Export mix WAV ↓</button></div>
+    </section>
+    <section class="below"><article id="about"><p class="eyebrow">MORE THAN AN INSTRUMENT</p><h2>A tradition of connection.</h2><p>Mbira music brings together interwoven melodies and repeating themes. In Zimbabwe and Malawi, the craft of making and playing these instruments is passed between generations. This digital study is an invitation to listen and explore.</p><p>Its layout and synthesized voice are inspired by the instrument. Real mbiras have individual tunings, timbres, and playing practices; this simulator does not reproduce an authentic Nyamaropa tuning.</p><a class="learn-link" href="https://ich.unesco.org/en/RL/art-of-crafting-and-playing-mbira-sansi-the-finger-plucking-traditional-musical-instrument-in-malawi-and-zimbabwe-01541" target="_blank" rel="noopener noreferrer">Explore the living tradition at UNESCO ↗</a></article><article class="play-guide"><p class="eyebrow">LET YOUR THUMBS WANDER</p><h2>Start with a few notes.</h2><p><b>01</b> Tap a metal key, or press its letter on your keyboard.</p><p><b>02</b> Alternate low and high notes. Leave a little space.</p><p><b>03</b> Hit Record, play a phrase, then loop it back.</p><small>Headphones bring out the lower notes. Sessions save on this device. Record a first loop, then add layers while it plays. Export your mix to keep a copy. The gourd surround is a visual option.</small></article></section>
+  </main><footer>Made for curiosity. Inspired by Zimbabwe.<span>LISTEN · EXPLORE · CREATE</span></footer>
+</body>
+</html>

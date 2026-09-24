@@ -1,0 +1,8 @@
+{
+  "name": "virtual-mbira",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A dependency-free mbira-inspired browser instrument with recording and WAV export",
+  "scripts": { "start": "node server.js", "test": "node --test tests/music.test.js" },
+  "engines": { "node": ">=18" }
+}
