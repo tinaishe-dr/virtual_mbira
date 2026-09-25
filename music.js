@@ -6,8 +6,10 @@
     { name: 'Right', shortcuts: 'zxcvbnm,./', midi: [57, 65, 67, 69, 70, 72, 74, 75, 77, 79] }
   ];
   const keys = banks.flatMap((bank, bankIndex) => bank.midi.map((midi, i) => ({ id: `${bankIndex}-${i}`, midi, bank: bankIndex, shortcut: bank.shortcuts[i] })));
+  const nyungaKeys = [74,81,72,79,70,77,62,82,58,77,65,79,67,81,69].map((midi, i) => ({ id: `nyunga-${i + 1}`, midi, shortcut: 'qwertyuiopasdfg'[i], number: i + 1 }));
   // Keep the live key mapping separate from stored events, which retain their pitches.
   function keyPitch(key, tuning = 'original', transpose = 0, root = 'f') {
+    if (key.id.startsWith('nyunga-')) return key.midi + (tuningRoots.find(item => item.id === root)?.offset || 0) + transpose;
     return pitch(key.midi, tuning, transpose, root);
   }
   // Root offsets are relative to the prototype's F layout, within one octave.
@@ -29,12 +31,12 @@
   const noteName = midi => ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'][((midi % 12) + 12) % 12] + (Math.floor(midi / 12) - 1);
   function validSession(value) {
     if (!value || !Number.isFinite(value.duration) || value.duration < .1 || value.duration > 120) return false;
-    const validEvents = events => Array.isArray(events) && events.length > 0 && events.length <= 10000 && events.every((e, i) => e && keys.some(k => k.id === e.id) && Number.isFinite(e.at) && e.at >= 0 && e.at < value.duration && (i === 0 || e.at >= events[i - 1].at) && Number.isInteger(e.midi) && e.midi >= 20 && e.midi <= 100);
+    const validEvents = events => Array.isArray(events) && events.length > 0 && events.length <= 10000 && events.every((e, i) => e && [...keys, ...nyungaKeys].some(k => k.id === e.id) && Number.isFinite(e.at) && e.at >= 0 && e.at < value.duration && (i === 0 || e.at >= events[i - 1].at) && Number.isInteger(e.midi) && e.midi >= 20 && e.midi <= 100);
     if (value.version === 1) return validEvents(value.events);
     if (value.version !== 2 || !Array.isArray(value.tracks) || !value.tracks.length || value.tracks.length > 8) return false;
     return new Set(value.tracks.map(t => t?.id)).size === value.tracks.length && value.tracks.every(t =>
       t && typeof t.id === 'string' && t.id.length > 0 && t.id.length <= 80 && typeof t.name === 'string' && t.name.length <= 40 && typeof t.muted === 'boolean' && Number.isFinite(t.level) && t.level >= 0 && t.level <= 1 && validEvents(t.events) &&
-      t.sound && ['reference', 'synth'].includes(t.sound.voice) && Number.isFinite(t.sound.buzz) && t.sound.buzz >= 0 && t.sound.buzz <= 1 && Number.isFinite(t.sound.sustain) && t.sound.sustain >= .4 && t.sound.sustain <= 3.5
+      t.sound && ['reference', 'nyunga', 'synth'].includes(t.sound.voice) && Number.isFinite(t.sound.buzz) && t.sound.buzz >= 0 && t.sound.buzz <= 1 && Number.isFinite(t.sound.sustain) && t.sound.sustain >= .4 && t.sound.sustain <= 3.5
     ) && value.tracks.reduce((sum, t) => sum + t.events.length, 0) <= 10000;
   }
   function restoreSession(value) {
@@ -59,7 +61,7 @@
     samples.forEach((sample, i) => view.setInt16(44 + i * 2, Math.max(-1, Math.min(1, sample)) * (sample < 0 ? 32768 : 32767), true));
     return data;
   }
-  const api = { banks, keys, tuningRoots, pitch, keyPitch, frequency, noteName, validSession, restoreSession, mixSession, encodeWav };
+  const api = { banks, keys, nyungaKeys, tuningRoots, pitch, keyPitch, frequency, noteName, validSession, restoreSession, mixSession, encodeWav };
   if (typeof module !== 'undefined') module.exports = api;
   root.MbiraMusic = api;
 })(globalThis);

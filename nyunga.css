@@ -19,3 +19,8 @@
 .nyunga .board-rattle i { width:28%; height:auto; aspect-ratio:1; margin:0; border-radius:50%; border:3px dashed #c7b69c; background:radial-gradient(circle,#9d654b 30%,#c2a987 34%,#9c4534 50%,#c5b796 55%,#88714f); }
 .nyunga .board-rattle i:nth-child(n+3) { display:none; }
 @media(max-width:740px) { .nyunga .tine-label { font-size:8px; } .instrument-picker { gap:8px; } }
+
+.nyunga .hide-labels .tine-label { visibility:hidden; }
+.nyunga-key .key-number { position:absolute; bottom:3%; left:0; right:0; font-size:8px; z-index:2; color:#28332e; }
+.nyunga .tine-label { bottom:17%; font-size:7px; gap:1px; }
+.pad-group[hidden] { display:none; }

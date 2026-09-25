@@ -5,6 +5,7 @@ const settings = { volume: .65, buzz: 1, sustain: 1, voice: 'reference' };
 let tuning = 'original', tuningRoot = 'bb', transpose = 0, recording = false, recordStart = 0, session = null, looping = false, playback = null, generation = 0;
 const buttons = new Map(), pads = new Map(), animations = new Map(), held = new Set();
 let instrumentType = 'dzavadzimu';
+const instrumentVoices = { dzavadzimu: 'reference', nyunga: 'nyunga' };
 const STORAGE = 'mbira-session-v2';
 const LEGACY_STORAGE = 'mbira-session-v1';
 let draft = null, exporting = false;
@@ -20,7 +21,9 @@ try {
   }
 } catch { /* Tuning remains usable when storage is unavailable. */ }
 $('tuning-root').value = tuningRoot; $('tuning').value = tuning; $('transpose').value = transpose;
-const currentPitch = key => MbiraMusic.keyPitch(key, tuning, transpose, tuningRoot);
+let nyungaRoot = 'f', nyungaTranspose = 0;
+try { const saved = JSON.parse(localStorage.getItem('mbira-nyunga-tuning-v1')); if (saved && MbiraMusic.tuningRoots.some(r => r.id === saved.root) && Number.isInteger(saved.transpose) && Math.abs(saved.transpose) <= 12) { nyungaRoot = saved.root; nyungaTranspose = saved.transpose; } } catch {}
+const currentPitch = key => key.id.startsWith('nyunga-') ? MbiraMusic.keyPitch(key, 'original', nyungaTranspose, nyungaRoot) : MbiraMusic.keyPitch(key, tuning, transpose, tuningRoot);
 const timestamp = seconds => `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 MbiraMusic.keys.forEach(key => {
   const button = document.createElement('button');
@@ -51,9 +54,18 @@ MbiraMusic.banks.forEach((bank, index) => {
   $('touch-pads').append(group);
 });
 function updateNotes() {
+  MbiraMusic.nyungaKeys.forEach(key => {
+    const button = buttons.get(key.id); if (!button) return;
+    const name = MbiraMusic.noteName(currentPitch(key));
+    button.querySelector('.note-name').textContent = name;
+    button.setAttribute('aria-label', `Nyunga Nyunga key ${key.number}, ${name}, keyboard ${key.shortcut}`);
+    pads.get(key.id).textContent = `${key.number} · ${name} · ${key.shortcut.toUpperCase()}`;
+    pads.get(key.id).setAttribute('aria-label', button.getAttribute('aria-label'));
+  });
   const root = MbiraMusic.tuningRoots.find(root => root.id === tuningRoot);
   $('tuning-note').textContent = `${root.name} ${tuning === 'original' ? 'mixolydian' : tuning === 'minor' ? 'natural minor' : 'major'} · equal temperament. Traditional instruments may use different intervals. Saved loops keep their recorded pitches.`;
   $('transpose-value').value = `${transpose > 0 ? '+' : ''}${transpose} semitones`;
+  if (instrumentType === 'nyunga') { $('tuning-note').textContent = `${MbiraMusic.tuningRoots.find(r => r.id === nyungaRoot).name} tuning · your supplied F-major layout, transposed with its exact intervals. Saved loops keep their pitches.`; $('transpose-value').value = `${nyungaTranspose} semitones`; }
   // Tuning changes sound and note labels, never the established key geometry.
   MbiraMusic.keys.forEach(key => { const name = MbiraMusic.noteName(currentPitch(key)), button = buttons.get(key.id); button.querySelector('.note-name').textContent = name; button.setAttribute('aria-label', `${MbiraMusic.banks[key.bank].name}, ${name}, keyboard ${key.shortcut}`); pads.get(key.id).textContent = name; pads.get(key.id).setAttribute('aria-label', button.getAttribute('aria-label')); });
 }
@@ -68,7 +80,6 @@ async function ready() {
   catch (error) { $('audio-status').textContent = 'Sound unavailable — try a current browser'; $('session-status').textContent = error.message; return false; }
 }
 async function strike(key) {
-  if (instrumentType === 'nyunga') return;
   const token = generation;
   if (!await ready() || token !== generation) return;
   const midi = currentPitch(key); audio.play(midi, settings); flash(key.id, midi);
@@ -83,7 +94,7 @@ async function strike(key) {
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape') { silence(); return; }
   if (event.ctrlKey || event.metaKey || event.altKey || event.repeat || /^(INPUT|SELECT|TEXTAREA)$/.test(event.target.tagName) || event.target.isContentEditable) return;
-  const key = MbiraMusic.keys.find(key => key.shortcut === event.key.toLowerCase());
+  const key = (instrumentType === 'nyunga' ? MbiraMusic.nyungaKeys : MbiraMusic.keys).find(key => key.shortcut === event.key.toLowerCase());
   if (!key || held.has(event.code)) return;
   event.preventDefault(); held.add(event.code); strike(key);
 });
@@ -91,12 +102,13 @@ document.addEventListener('keyup', event => held.delete(event.code));
 window.addEventListener('blur', () => held.clear());
 function saveTuning() {
   updateNotes();
+  if (instrumentType === 'nyunga') { try { localStorage.setItem('mbira-nyunga-tuning-v1', JSON.stringify({ root: nyungaRoot, transpose: nyungaTranspose })); } catch {} return; }
   try { localStorage.setItem(TUNING_STORAGE, JSON.stringify({ root: tuningRoot, scale: tuning, transpose })); } catch { /* Optional preference storage. */ }
 }
-$('tuning-root').addEventListener('change', e => { tuningRoot = e.target.value; saveTuning(); });
+$('tuning-root').addEventListener('change', e => { if (instrumentType === 'nyunga') nyungaRoot = e.target.value; else tuningRoot = e.target.value; saveTuning(); });
 $('tuning').addEventListener('change', e => { tuning = e.target.value; saveTuning(); });
-$('voice').addEventListener('change', e => { settings.voice = e.target.value; });
-$('transpose').addEventListener('input', e => { transpose = Number(e.target.value); saveTuning(); });
+$('voice').addEventListener('change', e => { settings.voice = e.target.value; instrumentVoices[instrumentType] = settings.voice; });
+$('transpose').addEventListener('input', e => { if (instrumentType === 'nyunga') nyungaTranspose = Number(e.target.value); else transpose = Number(e.target.value); saveTuning(); });
 ['volume', 'buzz', 'sustain'].forEach(name => $(name).addEventListener('input', event => {
   settings[name] = Number(event.target.value) / (name === 'sustain' ? 1 : 100);
   $(name + '-value').value = name === 'sustain' ? `${settings[name].toFixed(1)} s` : `${event.target.value}%`;
@@ -115,7 +127,7 @@ function renderTracks() {
     const name = document.createElement('input'); name.type = 'text'; name.value = track.name; name.maxLength = 40;
     name.className = 'track-name'; name.setAttribute('aria-label', `Name of loop ${index + 1}`); name.disabled = recording;
     name.addEventListener('change', () => { track.name = name.value.trim() || `Loop ${index + 1}`; name.value = track.name; save(); });
-    const detail = document.createElement('span'); detail.className = 'track-detail'; detail.textContent = `${track.events.length} notes · ${track.sound.voice === 'reference' ? 'Video voice' : 'Synth voice'}`;
+    const detail = document.createElement('span'); detail.className = 'track-detail'; detail.textContent = `${track.events.length} notes · ${track.sound.voice === 'nyunga' ? 'Nyunga video voice' : track.sound.voice === 'reference' ? 'Video voice' : 'Synth voice'}`;
     const mute = document.createElement('button'); mute.className = 'secondary'; mute.textContent = track.muted ? 'Unmute' : 'Mute';
     mute.setAttribute('aria-label', `${track.muted ? 'Unmute' : 'Mute'} loop ${index + 1}`); mute.setAttribute('aria-pressed', track.muted); mute.disabled = recording;
     mute.addEventListener('click', () => { track.muted = !track.muted; save(); refresh(); });
@@ -145,11 +157,11 @@ function refresh() {
   const audible = hasNotes && session.tracks.some(t => !t.muted && t.level > 0);
   $('record').innerHTML = recording ? '<span>■</span> Finish' : hasNotes ? '<span>＋</span> Add loop' : '<span>●</span> Record';
   $('record').classList.toggle('recording', recording); $('record').setAttribute('aria-pressed', recording);
-  $('record').disabled = instrumentType === 'nyunga' || !recording && (session?.tracks.length >= 8 || (session?.tracks.reduce((sum, t) => sum + t.events.length, 0) || 0) >= 10000);
+  $('record').disabled = !recording && (session?.tracks.length >= 8 || (session?.tracks.reduce((sum, t) => sum + t.events.length, 0) || 0) >= 10000);
   $('play').disabled = !hasNotes || recording; $('download').disabled = !audible || recording || exporting; $('clear').disabled = !hasNotes || recording;
   $('loop').disabled = recording; $('export-cycles').disabled = recording || exporting;
   $('play').textContent = playback?.kind === 'session' ? '■ Stop' : '▶ Play';
-  $('demo').textContent = playback?.kind === 'demo' ? '■ Stop example' : '▷ Hear an example'; $('demo').disabled = recording || instrumentType === 'nyunga';
+  $('demo').textContent = playback?.kind === 'demo' ? '■ Stop example' : '▷ Hear an example'; $('demo').disabled = recording;
   ['voice', 'buzz', 'sustain'].forEach(id => $(id).disabled = recording);
   $('loop-help').textContent = recording ? (session ? 'Recording now. Play over your existing loops, then press Finish to save this layer. Notes from additional passes join the same loop.' : 'Your first phrase sets the length for every layer. Press Finish when it is ready.') : hasNotes ? `${session.tracks.length} / 8 layers · ${session.duration.toFixed(1)} seconds per loop. Add loop records immediately; press Finish when you are done.` : 'Record your first phrase to set the loop length. Then add up to 8 layers.';
   for (const option of $('export-cycles').options) option.disabled = !!session && session.duration * Number(option.value) > 120;
@@ -218,6 +230,7 @@ function updateLoopButton() { $('loop').setAttribute('aria-pressed', looping); $
 $('loop').addEventListener('click', () => { looping = !looping; updateLoopButton(); });
 $('demo').addEventListener('click', () => {
   if (playback?.kind === 'demo') { silence(); return; }
+  if (instrumentType === 'nyunga') { beginPlayback({ duration: 6.4, events: [8,10,4,5,6,0,2,7,8,14,12,9,10,3,4,1].map((index, i) => ({ id: MbiraMusic.nyungaKeys[index].id, midi: currentPitch(MbiraMusic.nyungaKeys[index]), at: i * .4 })) }, 'demo'); return; }
   const ids = ['1-0','0-1','2-1','1-3','0-3','2-3','1-4','0-5','1-0','2-4','0-1','1-3','2-5','0-3','1-4','0-5'];
   beginPlayback({ duration: 6.4, events: ids.map((id, i) => ({ id, midi: currentPitch(MbiraMusic.keys.find(k => k.id === id)), at: i * .4 })) }, 'demo');
 });
@@ -283,35 +296,39 @@ try {
 } catch { /* Storage can be disabled without preventing play. */ }
 updateNotes(); refresh();
 
-// Nyunga Nyunga is an unmapped interface until the owner supplies its pitches.
-for (let index = 0; index < 15; index++) {
+const nyungaPads = document.createElement('div'); nyungaPads.className = 'pad-group'; nyungaPads.hidden = true;
+$('touch-pads').append(nyungaPads);
+MbiraMusic.nyungaKeys.forEach((definition, index) => {
   const key = document.createElement('button');
-  key.className = 'tine nyunga-key';
-  key.dataset.number = index + 1;
-  key.style.setProperty('--left', `${2 + index * 6.35}%`);
-  key.style.setProperty('--width', '5.5%');
-  const distance = Math.abs(index - 7);
-  key.style.setProperty('--length', `${(index % 2 === 0 ? 91 : 66) - distance * 2.4}%`);
-  key.innerHTML = `<span class="tine-label">${index + 1}</span>`;
-  key.setAttribute('aria-label', `Nyunga Nyunga key ${index + 1}, mapping pending`);
-  key.addEventListener('click', () => {
-    document.querySelectorAll('.nyunga-key').forEach(button => button.classList.remove('active'));
-    key.classList.add('active');
-    $('last-note').textContent = `Key ${index + 1} · mapping pending`;
-  });
-  $('key-banks').append(key);
-}
+  key.className = 'tine nyunga-key'; key.dataset.number = index + 1; key.dataset.id = definition.id;
+  key.style.setProperty('--left', `${2 + index * 6.35}%`); key.style.setProperty('--width', '5.5%');
+  key.style.setProperty('--length', `${(index % 2 === 0 ? 91 : 66) - Math.abs(index - 7) * 2.4}%`);
+  key.innerHTML = `<span class="key-number">${index + 1}</span><span class="tine-label"><span class="note-name"></span><kbd>${definition.shortcut.toUpperCase()}</kbd></span>`;
+  const pad = document.createElement('button'); pad.className = 'touch-pad';
+  for (const control of [key, pad]) {
+    control.addEventListener('pointerdown', event => { event.preventDefault(); strike(definition); });
+    control.addEventListener('click', event => { if (event.detail === 0) strike(definition); });
+  }
+  $('key-banks').append(key); nyungaPads.append(pad); buttons.set(definition.id, key); pads.set(definition.id, pad);
+});
+updateNotes();
 $('instrument-type').addEventListener('change', event => {
   silence();
   instrumentType = event.target.value;
+  settings.voice = instrumentVoices[instrumentType];
+  $('voice').value = settings.voice;
   const nyunga = instrumentType === 'nyunga';
   $('instrument-stage').classList.toggle('nyunga', nyunga);
   $('mapping-help').hidden = !nyunga;
-  $('labels').hidden = nyunga;
-  document.querySelector('.instrument-footer > span:first-child').textContent = nyunga ? 'Select keys 1–15 to identify their positions' : 'Use your keyboard or tap the keys';
-  document.querySelector('.touch-controls').hidden = nyunga;
+  $('labels').hidden = false;
+  document.querySelector('.instrument-footer > span:first-child').textContent = nyunga ? 'Keys 1–15: Q W E R T Y U I O P A S D F G' : 'Use your keyboard or tap the keys';
+  document.querySelectorAll('.pad-group').forEach(group => { group.hidden = nyunga ? group !== nyungaPads : group === nyungaPads; });
   document.querySelector('.wood-engraving').innerHTML = nyunga ? 'NYUNGA NYUNGA <span>15 KEYS</span>' : 'MBIRA <span>24 KEYS · ENDLESS POSSIBILITIES</span>';
-  for (const id of ['tuning-root', 'tuning', 'transpose']) $(id).disabled = nyunga;
-  $('last-note').textContent = nyunga ? 'Select a numbered key' : 'Your next note is waiting';
+  $('tuning').disabled = nyunga;
+  $('tuning').value = nyunga ? 'major' : tuning;
+  $('tuning-root').value = nyunga ? nyungaRoot : tuningRoot;
+  $('transpose').value = nyunga ? nyungaTranspose : transpose;
+  updateNotes();
+  $('last-note').textContent = nyunga ? 'Your Nyunga Nyunga is ready' : 'Your next note is waiting';
   refresh();
 });

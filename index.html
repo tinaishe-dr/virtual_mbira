@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="nyunga.css">
   <script defer src="music.js"></script>
   <script defer src="reference-bank.js"></script>
+  <script defer src="nyunga-bank.js"></script>
   <script defer src="audio.js"></script>
   <script defer src="app.js"></script>
 </head>
@@ -21,7 +22,7 @@
     <div class="studio">
       <section class="instrument-panel" aria-label="Playable mbira">
         <div class="instrument-picker"><label for="instrument-type">Instrument</label><select id="instrument-type"><option value="dzavadzimu">Mbira Dzavadzimu · 24 keys</option><option value="nyunga">Nyunga Nyunga · 15 keys</option></select></div>
-        <p id="mapping-help" class="field-note" hidden>15 keys, numbered left to right. Select a key to identify it. Notes and keyboard mappings will be added next.</p>
+        <p id="mapping-help" class="field-note" hidden>15 keys, numbered left to right. Your F-major layout is ready to play. Choose a tuning key to transpose it.</p>
         <div class="panel-heading"><span><span class="live-dot"></span> THE SOUNDBOARD</span><div><button id="gourd" class="text-button" aria-pressed="true">Gourd on</button><button id="labels" class="text-button" aria-pressed="false">Key labels off</button></div></div>
         <div class="instrument-stage with-gourd" id="instrument-stage"><div class="gourd-shell" aria-hidden="true"></div><div class="soundboard hide-labels" id="soundboard"><div class="wood-engraving">MBIRA <span>24 KEYS · ENDLESS POSSIBILITIES</span></div><div class="key-banks" id="key-banks"><div class="pressure-bar" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="finger-hole" aria-hidden="true"></div><div class="board-rattle" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="board-stamp" aria-hidden="true">DZAVADZIMU<br><span>INSPIRED</span></div></div></div>
         <div class="instrument-footer"><span><span class="keycap">A</span> Use your keyboard or tap the keys</span><span id="last-note" aria-live="off">Your next note is waiting</span></div>
@@ -29,7 +30,7 @@
       </section>
       <aside class="controls" aria-label="Instrument settings">
         <p class="eyebrow">MAKE IT YOURS</p><h2>Shape your sound</h2>
-        <label for="voice">Voice</label><select id="voice"><option value="reference">Your mbira · Nyamaropa Bb</option><option value="synth">Original synthesized voice</option></select><p class="field-note">Built from filtered strikes in your video, with reconstructed ringing tails.</p>
+        <label for="voice">Voice</label><select id="voice"><option value="reference">Your mbira · Nyamaropa Bb</option><option value="nyunga">Nyunga Nyunga · video reference</option><option value="synth">Original synthesized voice</option></select><p class="field-note">Built from filtered strikes in your video, with reconstructed ringing tails.</p>
         <label for="tuning-root">Tuning key</label><select id="tuning-root" aria-describedby="tuning-note"></select>
         <label for="tuning">Scale</label><select id="tuning"><option value="original">Mixolydian</option><option value="major">Major</option><option value="minor">Natural minor</option></select><p class="field-note" id="tuning-note">B♭ tuning · equal temperament. Traditional instruments may use different intervals.</p>
         <label for="transpose">Pitch <output id="transpose-value">0 semitones</output></label><input id="transpose" type="range" min="-12" max="12" value="0" step="1">

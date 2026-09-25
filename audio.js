@@ -31,32 +31,35 @@ class MbiraAudio {
       nodes[0].addEventListener('ended', () => gain.disconnect());
       return nodes;
     }
-    if (settings.voice === 'reference' && globalThis.MbiraReference) {
+    if ((settings.voice === 'reference' && globalThis.MbiraReference) || (settings.voice === 'nyunga' && globalThis.NyungaReference)) {
       return MbiraAudio.referenceVoice(context, destination, midi, time, settings);
     }
     return MbiraAudio.synthVoice(context, destination, midi, time, settings);
   }
-  static referenceBank(context) {
-    if (!MbiraAudio.referenceBuffers.has(context)) {
+  static referenceBank(context, voice = 'reference') {
+    const reference = voice === 'nyunga' ? globalThis.NyungaReference : globalThis.MbiraReference;
+    if (!MbiraAudio.referenceBuffers.has(context)) MbiraAudio.referenceBuffers.set(context, new Map());
+    const banks = MbiraAudio.referenceBuffers.get(context);
+    if (!banks.has(voice)) {
       const decode = encoded => {
         const bytes = Uint8Array.from(atob(encoded), char => char.charCodeAt(0));
         const view = new DataView(bytes.buffer);
-        const buffer = context.createBuffer(1, bytes.length / 2, MbiraReference.sampleRate);
+        const buffer = context.createBuffer(1, bytes.length / 2, reference.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < data.length; i++) data[i] = view.getInt16(i * 2, true) / 32768;
         return buffer;
       };
-      MbiraAudio.referenceBuffers.set(context, MbiraReference.samples.map(sample => ({
+      banks.set(voice, reference.samples.map(sample => ({
         rootHz: sample.rootHz,
         tone: decode(sample.pcm),
         attack: decode(sample.attack)
       })));
     }
-    return MbiraAudio.referenceBuffers.get(context);
+    return banks.get(voice);
   }
   static referenceVoice(context, destination, midi, time, settings) {
     const frequency = MbiraMusic.frequency(midi);
-    const bank = MbiraAudio.referenceBank(context);
+    const bank = MbiraAudio.referenceBank(context, settings.voice);
     const sample = bank.reduce((closest, candidate) =>
       Math.abs(Math.log2(frequency / candidate.rootHz)) < Math.abs(Math.log2(frequency / closest.rootHz)) ? candidate : closest
     );
