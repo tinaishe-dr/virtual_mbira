@@ -13,11 +13,11 @@ For a stable local address and reliable browser storage, install Node.js 18 or l
 node server.js
 ```
 
-Open **http://localhost:4173**. Alternatively, use `npm start`. Set `PORT` to choose another port. The development server listens only on your computer. For hosting, serve `index.html`, `styles.css`, `gourd.css`, `nyunga.css`, the `assets/` directory, `music.js`, `reference-bank.js`, `audio.js`, and `app.js` with any static website host.
+Open **http://localhost:4173**. Alternatively, use `npm start`. Set `PORT` to choose another port. The development server listens only on your computer. For hosting, serve `index.html`, `styles.css`, `gourd.css`, `nyunga.css`, the `assets/` directory, `music.js`, `reference-bank.js`, `nyunga-bank.js`, `audio.js`, and `app.js` with any static website host.
 
 ## Nyunga Nyunga interface
 
-Choose **Nyunga Nyunga · 15 keys** in the Instrument menu. Its narrow wooden board, alternating tine lengths, brown gourd surround and metal rattle plate follow the supplied photos. Keys are numbered **1–15 from left to right**, always visible for mapping. Select a key to identify it. This interface intentionally has no pitches or keyboard shortcuts yet; these await the owner’s mappings. New recording, tuning and the example are unavailable in this mode; saved Dzavadzimu loops remain available. Switch back to Dzavadzimu to play the existing instrument.
+Choose **Nyunga Nyunga · 15 keys** in the Instrument menu. The numbered keys run left to right, with keyboard shortcuts **Q W E R T Y U I O P A S D F G**. In the owner's F-major tuning their pitches are **D5, A5, C5, G5, B♭4, F5, D4, B♭5, B♭3, F5, F4, G5, G4, A5, A4**. These exact intervals and repeated notes are preserved. All 12 tuning roots transpose this layout relative to F; the scale selector is fixed to the supplied layout. Nyunga root and pitch shift are remembered separately from Dzavadzimu. Both instruments support touch pads, keyboard playing, layered recording, saved sessions and WAV export using the existing voice. Saved layers retain their pitches when switching instruments.
 
 ## Play
 
@@ -34,6 +34,10 @@ Choose **Nyunga Nyunga · 15 keys** in the Instrument menu. Its narrow wooden bo
 - Toggle labels or the optional gourd surround. The surround is visual and does not change the sound.
 
 The first interaction enables audio. Headphones help with low notes. Both voices use an output compressor and a 32-voice limit. Keys are extended by 10%. From the center outward, the upper bank follows Q, W, E, R, T, Y, U, with visual lengths maintaining the V-shaped outline independently of their pitches. Keyboard shortcuts and recording IDs are unchanged.
+
+## Nyunga Nyunga voice
+
+Selecting Nyunga Nyunga automatically selects its own **Nyunga Nyunga · video reference** voice, built from six strikes in the supplied `1790276870.471718share.MP4`. Frequency-filtered attacks and measured metallic resonances are combined with fitted decay tails to reduce overlap from other notes. Samples are transposed to the owner's exact 15-key mapping and selected tuning. This approximates the recorded timbre; it is not a clean studio recording of every tine. The local `nyunga-bank.js` needs no video upload or network connection. Saved layers keep their voice for playback and WAV export. Switching back restores the Dzavadzimu voice selection.
 
 ## Video reference voice
 
