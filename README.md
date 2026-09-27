@@ -88,3 +88,7 @@ Manual checks: play multiple keys, record a short phrase, loop it, export a WAV,
 To rebuild the reference bank, decode the source video with `node scripts/decode-reference.cjs <video-path>` (requires Playwright), then run `python scripts/build-reference-bank.py test-results/reference.f32` (requires NumPy). These are development tools only; users do not need either dependency to play. The source video and intermediate analysis files are not bundled.
 
 MIDI input, a complete studio-recorded per-key sample set, and traditional tuning datasets are possible future additions; they are not implemented yet.
+
+## Reference gallery and background
+
+The information section adapts the supplied mbira background document into community and cultural-tourism context. Three supplied instrument photos are included under `assets/`, along with a browser-ready H.264/AAC performance video and poster. The dated festival announcement is excluded from evergreen copy. Photos load lazily and the video loads on demand without autoplay. The local server streams media and supports byte ranges for seeking.
