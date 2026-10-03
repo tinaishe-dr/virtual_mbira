@@ -1,6 +1,7 @@
-# Virtual Mbira
+# Virtual Mbira - a little space to play
 
-A browser-based musical instrument inspired by Zimbabwean mbira traditions. Play **Mbira Dzavadzimu** or **Nyunga Nyunga**, explore different tuning keys, build layered loops, and export your music as a WAV file.
+A complete browser instrument inspired by the mbira dzavadzimu. Play 24 metal keys, explore tunings, record phrases, loop them, and export audio. Rebuilt from the original p5.js sketch with native Web Audio and accessible HTML controls.
+<img width="1548" height="1096" alt="Virtual Mbira site" src="https://github.com/user-attachments/assets/8c927ee0-6d33-45aa-9328-84b56979f07d" />
 
 Originally a p5.js experiment, the site now uses **HTML, CSS, JavaScript, and the native Web Audio API**, with no runtime framework or build step.
 
@@ -88,7 +89,12 @@ The studio supports **eight layers**, up to **10,000 note events**, and recordin
 
 Exports combine all unmuted layers into a **mono, 44.1 kHz, 16-bit WAV**, including the final notes' decay. Empty takes leave the existing mix intact. Switching away from the page stops playback and finishes an active recording.
 
-Sessions are saved in this browser when local storage is available. They are not cloud backups: clearing site data or using private browsing can remove them. Export a WAV to keep a copy of your music.
+
+https://github.com/user-attachments/assets/658c3942-96a7-4153-807e-813ff90cdba7
+
+
+
+The default voice uses eight selected strikes from the supplied mbira performance. Frequency isolation retains the early attack and metallic resonances; fitted, decaying resonances replace overlapping ringing tails. A short high-frequency contact sample supplies the adjustable rattle. The closest sampled root is transposed for each playable pitch. Live playback and WAV export use the same bank, which is bundled locally in `reference-bank.js` (about 1.7 MB); no video upload or runtime network request is required.
 
 ## Sound design
 
@@ -160,7 +166,16 @@ The builders use strike times specific to their original source recordings. A di
 
 ## Hosting
 
-The playable site is static. Deploy these files and folders to a static website host:
+- `index.html` - application structure and accessible controls
+- `styles.css` - responsive studio and instrument construction
+- `music.js` - key layout, tuning, session validation, WAV encoding
+- `audio.js` - polyphonic synthesis and offline rendering
+- `reference-bank.js` - generated PCM sound bank derived from the reference performance
+- `scripts/build-reference-bank.py` - reproducible sound-bank extraction using NumPy and mono 22050 Hz float32 audio
+- `app.js` - pointer/keyboard input, transport, audio-clock scheduling, local saving
+- `server.js` - dependency-free local development server
+- `tests/music.test.js` - note mapping, tuning, session validation, and WAV tests
+- `virtual_mbira/v_mbira.js` - preserved original p5.js experiment; not loaded by the app
 
 - `index.html`, `styles.css`, `gourd.css`, and `nyunga.css`.
 - `app.js`, `music.js`, and `audio.js`.
