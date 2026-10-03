@@ -1,94 +1,179 @@
-# Mbira — a little space to play
+# Virtual Mbira
 
-A complete browser instrument inspired by the mbira dzavadzimu. Play 24 metal keys, explore tunings, record phrases, loop them, and export audio. Rebuilt from the original p5.js sketch with native Web Audio and accessible HTML controls.
+A browser-based musical instrument inspired by Zimbabwean mbira traditions. Play **Mbira Dzavadzimu** or **Nyunga Nyunga**, explore different tuning keys, build layered loops, and export your music as a WAV file.
 
-## Run
+Originally a p5.js experiment, the site now uses **HTML, CSS, JavaScript, and the native Web Audio API**, with no runtime framework or build step.
 
-Open **index.html** in a modern browser. No installation, API key, or build step is required. The instrument works offline; optional Google Fonts fall back to system fonts.
+## Features
 
-For a stable local address and reliable browser storage, install Node.js 18 or later and run:
+- **Two instruments:** a 24-key Dzavadzimu-inspired layout and a 15-key Nyunga Nyunga.
+- **Mouse, keyboard, and touch input**, including larger touch pads for smaller screens.
+- **Separate video-derived voices** for each instrument, plus an original synthesized voice.
+- **All 12 tuning keys**, with pitch adjustment and separate tuning preferences for each instrument.
+- Adjustable volume, rattle, and resonance.
+- Wooden soundboards, tapered metal keys, animated key strikes, and optional gourd surrounds inspired by reference photographs.
+- **Up to eight recording layers**, with naming, mute, volume, and removal controls.
+- Local session saving and **WAV export** of the combined recording.
+- Responsive photo gallery, performance video, and information about mbira and its cultural context.
+
+## Run locally
+
+Install Node.js 18 or later, then run from the project folder:
+
+```sh
+npm start
+```
+
+Or run the server directly:
 
 ```sh
 node server.js
 ```
 
-Open **http://localhost:4173**. Alternatively, use `npm start`. Set `PORT` to choose another port. The development server listens only on your computer. For hosting, serve `index.html`, `styles.css`, `gourd.css`, `nyunga.css`, the `assets/` directory, `music.js`, `reference-bank.js`, `nyunga-bank.js`, `audio.js`, and `app.js` with any static website host.
+Open **http://localhost:4173** in your browser. No package installation or API key is needed to run the site. The development server listens only on your computer; set the `PORT` environment variable to use another port.
 
-## Nyunga Nyunga interface
+You can also open `index.html` directly, but the local server provides a consistent address for saved sessions and supports video seeking.
 
-Choose **Nyunga Nyunga · 15 keys** in the Instrument menu. The numbered keys run left to right, with keyboard shortcuts **Q W E R T Y U I O P A S D F G**. In the owner's F-major tuning their pitches are **D5, A5, C5, G5, B♭4, F5, D4, B♭5, B♭3, F5, F4, G5, G4, A5, A4**. These exact intervals and repeated notes are preserved. All 12 tuning roots transpose this layout relative to F; the scale selector is fixed to the supplied layout. Nyunga root and pitch shift are remembered separately from Dzavadzimu. Both instruments support touch pads, keyboard playing, layered recording, saved sessions and WAV export using the existing voice. Saved layers retain their pitches when switching instruments.
+## How to play
 
-## Play
+1. Choose an instrument from the **Instrument** menu.
+2. Click or tap a metal key, or press its keyboard shortcut. The first interaction enables audio.
+3. Choose a **Tuning key** and adjust the sound controls to taste.
+4. Use **Key labels** to show note names and keyboard shortcuts. On mobile, open **Larger touch pads**.
+5. Press **Escape** to stop recording or playback and silence the instrument.
 
-- Click or tap the tines. Multiple simultaneous touches and keyboard chords are supported.
-- Left upper keys: **Q W E R T Y U**.
-- Left lower keys: **A S D F G H J**.
-- Right keys: **Z X C V B N M , . /**.
-- Open **Larger touch pads** for easier playing on a small screen.
-- **Escape** stops the current recording or playback and silences all voices.
-- Use **Voice** to compare the video-derived sound with the original synthesizer. **Tuning**, **Pitch**, **Rattle**, **Resonance**, and **Volume** shape the sound.
-- **Tuning key** defaults to **B♭ (B flat)**. Choose from all 12 roots: B♭, C, D♭, D, E♭, E, F, G♭, G, A♭, A, and B. **Scale** offers the original mixolydian intervals, major, or natural minor. Root, scale, and extra pitch shift are remembered on this browser; key and touch-pad labels update immediately. Existing loops retain their recorded pitches.
-- In B♭ tuning, **W plays F4** and **E plays E♭4** at zero extra pitch shift. W sits directly beside Q (B♭3), with E on the other side of W. Their note labels match their sounds. Other tuning roots retain their previous pitch mappings; saved loops keep the notes recorded at the time.
-- Every time the site opens, the gourd is on, key labels are off, and the video reference voice starts with Rattle at 100% and Resonance at 1 second. Saved layers keep their recorded sound settings.
-- Toggle labels or the optional gourd surround. The surround is visual and does not change the sound.
+Headphones help bring out the lower notes.
 
-The first interaction enables audio. Headphones help with low notes. Both voices use an output compressor and a 32-voice limit. Keys are extended by 10%. From the center outward, the upper bank follows Q, W, E, R, T, Y, U, with visual lengths maintaining the V-shaped outline independently of their pitches. Keyboard shortcuts and recording IDs are unchanged.
+### Mbira Dzavadzimu
 
-## Nyunga Nyunga voice
+The 24-key layout has three groups:
 
-Selecting Nyunga Nyunga automatically selects its own **Nyunga Nyunga · video reference** voice, built from six strikes in the supplied `1790276870.471718share.MP4`. Frequency-filtered attacks and measured metallic resonances are combined with fitted decay tails to reduce overlap from other notes. Samples are transposed to the owner's exact 15-key mapping and selected tuning. This approximates the recorded timbre; it is not a clean studio recording of every tine. The local `nyunga-bank.js` needs no video upload or network connection. Saved layers keep their voice for playback and WAV export. Switching back restores the Dzavadzimu voice selection.
+- Left upper: **Q W E R T Y U**.
+- Left lower: **A S D F G H J**.
+- Right: **Z X C V B N M , . /**.
 
-## Video reference voice
+The initial tuning is **B♭**, with Mixolydian, Major, and Natural minor scale options. In the default B♭ layout with no pitch shift, **Q plays B♭3**, **W plays F4**, and **E plays E♭4**. W sits directly beside Q.
 
-The default voice uses eight selected strikes from the supplied mbira performance. Frequency isolation retains the early attack and metallic resonances; fitted, decaying resonances replace overlapping ringing tails. A short high-frequency contact sample supplies the adjustable rattle. The closest sampled root is transposed for each playable pitch. Live playback and WAV export use the same bank, which is bundled locally in `reference-bank.js` (about 1.7 MB); no video upload or runtime network request is required.
+### Nyunga Nyunga
 
-This is a reference-derived approximation, **not an exact isolated recording of every key**. The performance contains overlapping notes, and pitches outside the sampled range are transposed. The existing tunings remain unchanged; they do not claim to reproduce the video's complete tuning. The original synthesized voice remains available for comparison.
+The 15 keys are numbered **left to right**. Their keyboard shortcuts, in the same order, are:
 
-## Record and export
-
-Press **Record**, play your first phrase, and press **Finish**. This sets the shared loop length, including opening and closing silence (up to two minutes). Press **Add loop** to start recording another layer immediately while the existing mix plays. The recording row shows the captured note count. Press **Finish** to save it; recording also stops after two minutes. You can play over several passes: every note is placed at its position within the shared loop, so additional passes build up the same layer. A saved layer joins on the next available loop boundary without interrupting the backing tracks. Finishing a shorter part leaves the remainder of its loop silent.
-
-Build up to **8 layers**, with a shared limit of 10,000 note events. Each layer keeps its recorded pitches, voice, rattle, and resonance, so you can change the instrument settings before recording a contrasting part. Rename layers, adjust their volumes, mute them, or remove them. Mute and level changes apply to upcoming notes; existing notes finish ringing. Removing a layer stops playback. Empty takes leave the existing mix intact. **Play** plays the mix once; **Loop** repeats it. Adding a layer enables looping automatically.
-
-The complete mix, names, mute states, and levels save in browser storage when available and restore on reload. Older single-loop recordings automatically load as Loop 1. **Clear all** starts a new piece. This is local to your browser and address, not a cloud backup. Private browsing or clearing site data can remove it.
-
-Choose **1, 2, 4, or 8 loops** in Export length, then press **Export mix WAV** to create one combined mono 44.1 kHz, 16-bit recording. Exports include every unmuted layer at its own volume and recorded sound, the current master volume, and the final notes' decay. Repetition choices that exceed two minutes are unavailable. Muted layers are omitted; exports are disabled when every layer is muted or at zero volume. The reference voice is deterministic; the original synthesized voice generates fresh noise during rendering.
-
-Switching away from the page stops playback and finishes an active recording to avoid background timer interruptions. Returning to the page lets you restart playback.
-
-## Design and cultural context
-
-The wooden board, staggered left banks, right bank, pressure rod, wire ties, flattened tips, finger hole, and optional gourd surround were informed by the owner's reference photographs. Gourd mode follows the later IMG_5221 reference: a deep golden-yellow shell, a low-mounted weathered board, a foil-colored support, perimeter wire, crown-cap rattles, and a lower metal rattle bar. This view is drawn with local SVG and CSS; the photos are not bundled or uploaded by the application. Gourd off retains the standalone board view.
-
-The prototype's original F mixolydian pitch collection is available by choosing F and Original intervals. New sessions default to B♭ with those same intervals, putting the lowest key at B♭2; use Major if you want B♭ major, or Pitch −12 for an octave lower. All root and scale options are Western equal-tempered explorations, **not authentic Nyamaropa tuning presets**. A B♭ root alone does not specify an individual mbira's intervals or exact tuning. Traditional mbiras vary between makers, players, and communities; this is an educational digital interpretation rather than an acoustic replica. The demonstration is an original exploration phrase, not a traditional composition.
-
-Learn more through [UNESCO's account of crafting and playing Mbira/Sansi in Malawi and Zimbabwe](https://ich.unesco.org/en/RL/art-of-crafting-and-playing-mbira-sansi-the-finger-plucking-traditional-musical-instrument-in-malawi-and-zimbabwe-01541).
-
-## Development
-
-```sh
-node --test tests/music.test.js
+```text
+Key:        1   2   3   4   5   6   7   8    9   10  11  12  13  14  15
+Keyboard:   Q   W   E   R   T   Y   U   I    O    P   A   S   D   F   G
+F tuning:  D5  A5  C5  G5 Bb4  F5  D4 Bb5  Bb3   F5  F4  G5  G4  A5  A4
 ```
 
-An optional browser integration suite is included in `tests/browser.cjs`. With Playwright and its Chromium browser installed, start the development server and run `node tests/browser.cjs`. You can set `PLAYWRIGHT_MODULE` and `BROWSER_PATH` to use existing installations. The suite checks playback, recording, storage recovery, exported audio, and desktop/mobile layouts, and writes screenshots under `test-results/`.
+This is the owner's supplied **F-major tuning layout**, including its repeated notes and octave placements. Selecting another tuning key transposes the entire layout while preserving those intervals. The scale selector stays fixed to this layout. Nyunga Nyunga tuning preferences are saved separately from Dzavadzimu preferences.
 
-- `index.html` — application structure and accessible controls
-- `styles.css` — responsive studio and instrument construction
-- `music.js` — key layout, tuning, session validation, WAV encoding
-- `audio.js` — polyphonic synthesis and offline rendering
-- `reference-bank.js` — generated PCM sound bank derived from the reference performance
-- `scripts/build-reference-bank.py` — reproducible sound-bank extraction using NumPy and mono 22050 Hz float32 audio
-- `app.js` — pointer/keyboard input, transport, audio-clock scheduling, local saving
-- `server.js` — dependency-free local development server
-- `tests/music.test.js` — note mapping, tuning, session validation, and WAV tests
-- `virtual_mbira/v_mbira.js` — preserved original p5.js experiment; not loaded by the app
+### Startup sound and appearance
 
-Manual checks: play multiple keys, record a short phrase, loop it, export a WAV, reload to restore the take, try a narrow screen and the touch pads, and press Escape during playback. Test with the device's audio output enabled.
+Each time the site opens:
 
-To rebuild the reference bank, decode the source video with `node scripts/decode-reference.cjs <video-path>` (requires Playwright), then run `python scripts/build-reference-bank.py test-results/reference.f32` (requires NumPy). These are development tools only; users do not need either dependency to play. The source video and intermediate analysis files are not bundled.
+- Gourd surround is **on** and note labels are **off**.
+- The Dzavadzimu video-reference voice is selected.
+- Rattle is **100%**, resonance is **1 second**, and volume is **65%**.
 
-MIDI input, a complete studio-recorded per-key sample set, and traditional tuning datasets are possible future additions; they are not implemented yet.
+Selecting Nyunga Nyunga chooses its own video-reference voice. Nyunga key numbers remain visible to identify positions. Tuning preferences are restored when available. The gourd toggle changes the appearance only.
 
-## Reference gallery and background
+## Record, layer, and export
 
-The information section adapts the supplied mbira background document into community and cultural-tourism context. Three supplied instrument photos are included under `assets/`, along with a browser-ready H.264/AAC performance video and poster. The dated festival announcement is excluded from evergreen copy. Photos load lazily and the video loads on demand without autoplay. The local server streams media and supports byte ranges for seeking.
+1. Press **Record**, play a phrase, then press **Finish** to set the loop length.
+2. Press **Add loop** to record another part while the existing layers play.
+3. Press **Finish** to save the new layer. You can play across multiple passes; notes are placed within the shared loop.
+4. Rename layers, adjust their volume, or mute and remove individual parts.
+5. Choose **1, 2, 4, or 8 loops** as the export length, then select **Export mix WAV**.
+
+The studio supports **eight layers**, up to **10,000 note events**, and recordings of up to **two minutes**. Export lengths exceeding two minutes are unavailable. Each layer retains its recorded pitches, voice, rattle, and resonance, even when you switch instruments or change tuning.
+
+Exports combine all unmuted layers into a **mono, 44.1 kHz, 16-bit WAV**, including the final notes' decay. Empty takes leave the existing mix intact. Switching away from the page stops playback and finishes an active recording.
+
+Sessions are saved in this browser when local storage is available. They are not cloud backups: clearing site data or using private browsing can remove them. Export a WAV to keep a copy of your music.
+
+## Sound design
+
+The Dzavadzimu voice uses eight selected strikes from a supplied performance. The Nyunga Nyunga voice uses six strikes from its own reference video. Both combine filtered attacks and measured metallic resonances with reconstructed decay tails to reduce overlapping notes. The nearest sampled pitch is transposed to each requested note.
+
+These voices approximate the reference instruments; they are **not isolated studio recordings of every key**. Live playback and WAV export use the same sound banks. The original synthesized voice remains available for comparison. Sound banks are bundled locally, so playing the instrument requires no video upload or external audio service.
+
+## Cultural context and media
+
+The project explores music technology, instrument design, and learning through play. Its information section discusses mbira's connections to culture, history, spirituality, identity, and community-led cultural tourism, adapted from the supplied background document.
+
+The gallery includes three reference photographs and an optimized performance video. Images adapt to small screens, and the video has playback controls without autoplay.
+
+Real mbiras vary between makers and players. The simulator's equal-tempered tuning options and reference-derived voices do not claim to reproduce every traditional tuning or acoustic characteristic. The built-in examples are original exploration phrases, not traditional compositions.
+
+## Project structure
+
+```text
+virtual_mbira/
+├── index.html                 # Page, instrument controls, gallery, and video
+├── styles.css                 # Main styling and responsive layouts
+├── gourd.css                  # Dzavadzimu gourd appearance
+├── nyunga.css                 # Nyunga Nyunga appearance
+├── app.js                     # Input, instrument switching, and loop studio
+├── music.js                   # Key mappings, tuning, sessions, and WAV encoding
+├── audio.js                   # Web Audio playback and offline rendering
+├── reference-bank.js          # Dzavadzimu reference sound bank
+├── nyunga-bank.js             # Nyunga Nyunga reference sound bank
+├── assets/                    # Gourd artwork, photos, video, and poster
+├── server.js                  # Local server with video range support
+├── scripts/                   # Development tools for building sound banks
+├── tests/                     # Music and browser integration checks
+├── virtual_mbira/v_mbira.js    # Preserved original p5.js experiment
+└── README.md
+```
+
+## Development and checks
+
+Run the music tests:
+
+```sh
+npm test
+```
+
+For browser integration checks, install Playwright and Chromium in your development environment, start the local server, then run:
+
+```sh
+node tests/browser.cjs
+```
+
+Optional environment variables `PLAYWRIGHT_MODULE`, `BROWSER_PATH`, and `MBIRA_URL` allow an existing browser installation or another server address. Browser checks cover instrument playback, note mappings, layering, session restoration, WAV output, and responsive layouts. Generated screenshots and audio go into the ignored `test-results/` folder.
+
+### Rebuild a sound bank
+
+These development helpers require Playwright for video decoding and Python with NumPy for sound-bank generation:
+
+```sh
+node scripts/decode-reference.cjs "path/to/source-video.mp4"
+python scripts/build-reference-bank.py test-results/reference.f32
+```
+
+For the Nyunga Nyunga reference video, decode that video first, then run:
+
+```sh
+python scripts/build-nyunga-bank.py test-results/reference.f32
+```
+
+The builders use strike times specific to their original source recordings. A different video needs its own measurements. Decoding replaces the intermediate `reference.f32` file; rebuilding replaces the corresponding generated bank.
+
+## Hosting
+
+The playable site is static. Deploy these files and folders to a static website host:
+
+- `index.html`, `styles.css`, `gourd.css`, and `nyunga.css`.
+- `app.js`, `music.js`, and `audio.js`.
+- `reference-bank.js` and `nyunga-bank.js`.
+- The complete `assets/` folder.
+
+No server-side application, database, or build step is required for the hosted site. Browser storage is specific to the site's address, so recordings saved locally do not automatically move to a hosted domain.
+
+## Possible future improvements
+
+- MIDI controller input.
+- Studio-recorded samples for individual keys.
+- Additional documented traditional tunings.
+- Guided lessons and practice patterns.
+
+These are future ideas, not currently implemented features.
